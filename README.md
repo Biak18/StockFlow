@@ -363,6 +363,4 @@ Theme preference is persisted locally and applied before the application renders
 
 # License
 
-Private project.
 
-Adjust the license as needed before public distribution.
