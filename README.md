@@ -1,56 +1,368 @@
-# Welcome to your Expo app 👋
+# StockFlow
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+> **Production-oriented inventory management mobile app for small businesses.**
 
-## Get started
+Track products, stock movements, categories, suppliers, and team access with offline support and a multi-tenant organization model.
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+# Features
 
-2. Start the app
+## Authentication & Workspace
 
-   ```bash
-   npx expo start
-   ```
+- Email/password authentication (Supabase Auth)
+- User registration
+- Login
+- Forgot password
+- Multi-tenant organizations (workspaces)
+- Row Level Security (RLS)
+- Create organization on first launch
+- Team invitations via email (auto-join on sign-in)
+- Role-based access
+  - Owner
+  - Admin
+  - Member
 
-In the output, you'll find options to open the app in a
+---
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Inventory Management
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- Product CRUD
+  - SKU
+  - Barcode
+  - Cost price
+  - Selling price
+  - Stock quantity
+  - Minimum stock
+- Product image upload (Supabase Storage)
+- Categories
+- Suppliers
+- Stock In
+- Stock Out
+- Stock Adjustment
+- Inventory history
+- Barcode scanning
+  - Find existing product
+  - Create new product with pre-filled barcode
+- Dashboard
+  - Inventory value
+  - Low stock
+  - Out of stock
+  - Recent activity
+- Reports
+  - Inventory valuation
+  - Low stock report
+  - CSV export
 
-## Get a fresh project
+---
 
-When you're ready, run:
+## Offline Support
 
-```bash
-npm run reset-project
+- SQLite local database
+- Offline product cache
+- Sync queue
+- Automatic synchronization when back online
+- Offline status indicators
+
+---
+
+## User Experience
+
+- Light / Dark / System theme
+- Theme persistence
+- Skeleton loading
+- Smooth screen animations
+- Custom confirmation dialogs
+- Keyboard-aware forms
+- Tab bar hides while keyboard is visible
+
+---
+
+# Tech Stack
+
+| Layer                | Technology                                |
+| -------------------- | ----------------------------------------- |
+| **Framework**        | React Native, Expo SDK 56, Expo Router    |
+| **Language**         | TypeScript                                |
+| **Backend**          | Supabase (PostgreSQL, Auth, Storage, RLS) |
+| **State Management** | Zustand                                   |
+| **Forms**            | React Hook Form + Zod                     |
+| **Lists**            | FlashList                                 |
+| **Animations**       | React Native Reanimated                   |
+| **Offline Storage**  | Expo SQLite + Sync Queue                  |
+| **Keyboard**         | react-native-keyboard-controller          |
+
+---
+
+# Architecture
+
+Feature-based architecture designed for scalability.
+
+```text
+src/
+├── app/                 # Expo Router screens
+├── components/          # Shared UI components
+├── features/            # Feature modules
+│   ├── auth/
+│   ├── dashboard/
+│   ├── products/
+│   ├── inventory/
+│   ├── categories/
+│   ├── suppliers/
+│   └── settings/
+├── services/            # API, Supabase, Sync, Theme
+├── stores/              # Zustand stores
+├── database/            # SQLite database
+├── theme/               # Design system
+├── types/
+└── utils/
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### Data Flow
 
-### Other setup steps
+#### Online
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```text
+UI
+    ↓
+Feature Service / Repository
+    ↓
+Supabase
+```
 
-## Learn more
+#### Offline
 
-To learn more about developing your project with Expo, look at the following resources:
+```text
+UI
+    ↓
+Repository
+    ↓
+SQLite
+    ↓
+Sync Queue
+    ↓
+Automatic Sync
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Multi-Tenant Architecture
 
-## Join the community
+All business data is scoped by `organization_id`.
 
-Join our community of developers creating universal apps.
+Access is controlled through:
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- `organization_members`
+- Row Level Security (RLS)
+
+---
+
+# Prerequisites
+
+- Node.js 20+
+- Expo CLI (`npx expo`)
+- Supabase project
+- Android Emulator, iOS Simulator, or physical device
+
+---
+
+# Getting Started
+
+## 1. Install Dependencies
+
+```bash
+npm install
+
+# or
+
+yarn
+```
+
+---
+
+## 2. Environment Variables
+
+Create a `.env` file:
+
+```env
+EXPO_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+```
+
+> **Important:** Never commit your Service Role Key to the client application.
+
+---
+
+## 3. Configure Supabase
+
+Create or migrate the following tables:
+
+- profiles
+- organizations
+- organization_members
+- organization_invites
+- products
+- categories
+- suppliers
+- inventory_transactions
+
+Configure:
+
+- Row Level Security (RLS)
+- Helper functions
+  - `is_org_member`
+  - `is_org_admin`
+- RPC Functions
+  - `create_organization_with_owner`
+  - `accept_organization_invite`
+- Storage bucket for product images
+- Storage policies
+
+---
+
+## 4. Start the App
+
+```bash
+npx expo start
+```
+
+Then:
+
+- Press **i** for iOS
+- Press **a** for Android
+- Or scan the QR code using Expo Go or a Development Build
+
+> Barcode scanning, camera access, and offline functionality work best using a Development Build or a physical device.
+
+---
+
+# Available Scripts
+
+```bash
+npm start          # Start Expo development server
+npm run android    # Run on Android
+npm run ios        # Run on iOS
+npm run lint       # Run ESLint
+```
+
+---
+
+# App Structure
+
+```text
+(auth)/
+├── login
+├── register
+├── forgot-password
+└── create-organization
+
+(app)/
+├── index                  # Dashboard
+├── products/
+│   ├── index
+│   ├── create
+│   ├── [id]
+│   ├── edit
+│   └── stock
+├── categories/
+├── suppliers/
+└── settings/
+```
+
+### Bottom Navigation
+
+- Dashboard
+- Products
+- Settings
+
+Additional modules (Categories, Suppliers, Reports, Team Management) are accessible through Settings.
+
+---
+
+# Organizations & Team Invites
+
+### New User
+
+If the user has:
+
+- no organization
+- no pending invitation
+
+They are prompted to create a new organization and automatically become the **Owner**.
+
+---
+
+### Team Invitations
+
+Owners and Admins can invite members via email.
+
+Workflow:
+
+```text
+Owner/Admin
+        ↓
+Send Invitation
+        ↓
+User Registers or Signs In
+        ↓
+Invitation Accepted
+        ↓
+Organization Membership Created
+```
+
+Each organization's data is completely isolated using Row Level Security.
+
+---
+
+# Offline Behavior
+
+When offline:
+
+- Product list loads from SQLite
+- Product details load from SQLite
+- Create, Update, and Stock Movements are queued
+- Pending synchronization is displayed
+
+Current limitation:
+
+- Product image uploads require an internet connection.
+
+---
+
+# Theme
+
+Supported modes:
+
+- Light
+- Dark
+- System
+
+Theme preference is persisted locally and applied before the application renders.
+
+---
+
+# Security
+
+- Row Level Security (RLS) protects all tenant data.
+- Client applications use only the Supabase Anon Key.
+- Privileged operations use `SECURITY DEFINER` RPC functions.
+- Server-side policies validate roles before allowing organization management operations.
+
+---
+
+# Roadmap
+
+- [ ] Email delivery for invitations
+- [ ] Team management
+- [ ] Role management
+- [ ] Multi-organization switcher
+- [ ] Push notifications
+- [ ] Offline image upload queue
+- [ ] EAS production builds
+- [ ] App Store & Google Play release
+
+---
+
+# License
+
+Private project.
+
+Adjust the license as needed before public distribution.
