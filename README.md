@@ -210,9 +210,11 @@ yarn
 
 Create a `.env` file:
 
-````env
+```env
 EXPO_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+
+```
 
 ## 2b. Push / FCM (development builds)
 
@@ -224,7 +226,7 @@ android: {
   googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? "./google-services.json",
   package: "com.chantoewhan.stockflow",
 }
-````
+```
 
 > **Important:** Never commit your Service Role Key to the client application.
 
