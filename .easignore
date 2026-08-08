@@ -50,3 +50,7 @@ example
 
 /ios
 /android
+
+# Include all gitignore rules if desired, then override google-services.json:
+
+!google-services.json
