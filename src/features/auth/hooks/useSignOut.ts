@@ -4,7 +4,6 @@ import {
   useProductsStore,
   useSuppliersStore,
 } from "@/stores";
-import { router } from "expo-router";
 import { useState } from "react";
 import { AuthError, authService } from "../services/auth-service";
 
@@ -24,12 +23,11 @@ export function useSignOut() {
       useCategoriesStore.getState().reset();
       useSuppliersStore.getState().reset();
       // Guard in root layout will also catch this, but we navigate explicitly for speed
-      router.replace("/(auth)/login");
+      // router.replace("/(auth)/login");
     } catch (err) {
-      const message =
-        err instanceof AuthError
-          ? err.message
-          : "Failed to sign out. Please try again.";
+      const message = err instanceof AuthError
+        ? err.message
+        : "Failed to sign out. Please try again.";
       setError(message);
     } finally {
       setLoading(false);

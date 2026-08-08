@@ -190,63 +190,82 @@ export default function RootLayout() {
   }, []);
 
   // Auth guard
-  useEffect(() => {
-    if (!isInitialized || isResolvingOrg) return;
+  // useEffect(() => {
+  //   if (!isInitialized || isResolvingOrg) return;
 
-    const inAuthGroup = segments[0] === "(auth)";
-    const currentScreen = segments[1];
-    const hasOrganization = !!organization;
+  //   const inAuthGroup = segments[0] === "(auth)";
+  //   const currentScreen = segments[1];
+  //   const hasOrganization = !!organization;
 
-    if (!isAuthenticated) {
-      if (!inAuthGroup) {
-        router.replace("/(auth)/login");
-      }
-      return;
-    }
+  //   if (!isAuthenticated) {
+  //     if (!inAuthGroup) {
+  //       router.replace("/(auth)/login");
+  //     }
+  //     return;
+  //   }
 
-    if (!hasOrganization) {
-      if (currentScreen !== "create-organization") {
-        router.replace("/(auth)/create-organization");
-      }
-      return;
-    }
+  //   if (!hasOrganization) {
+  //     if (currentScreen !== "create-organization") {
+  //       router.replace("/(auth)/create-organization");
+  //     }
+  //     return;
+  //   }
 
-    if (inAuthGroup) {
-      router.replace("/(app)");
-    }
-  }, [
-    isInitialized,
-    isResolvingOrg,
-    isAuthenticated,
-    organization,
-    segments,
-    router,
-  ]);
+  //   if (inAuthGroup) {
+  //     router.replace("/(app)");
+  //   }
+  // }, [
+  //   isInitialized,
+  //   isResolvingOrg,
+  //   isAuthenticated,
+  //   organization,
+  //   segments,
+  //   router,
+  // ]);
+
   const booting = !isInitialized || isResolvingOrg;
+
+  const inApp = isAuthenticated && !!organization;
+  const needsOrg = isAuthenticated && !organization;
+  const loggedOut = !isAuthenticated;
+  console.log(needsOrg);
   return (
     <ErrorBoundary>
       <GestureHandlerRootView
-        style={[styles.root, { backgroundColor: theme.colors.background }]}
+        style={{ flex: 1, backgroundColor: theme.colors.background }}
       >
-        <SafeAreaProvider>
-          <KeyboardProvider>
+        <KeyboardProvider navigationBarTranslucent>
+          <SafeAreaProvider>
             <StatusBar style={theme.mode === "dark" ? "light" : "dark"} />
+
             {booting ? (
               <LoadingScreen />
             ) : (
               <Stack
                 screenOptions={{
                   headerShown: false,
+                  animation: "fade", // softer than default push
                   contentStyle: { backgroundColor: theme.colors.background },
                 }}
               >
-                <Stack.Screen name="(auth)" />
-                <Stack.Screen name="(app)" />
+                <Stack.Protected guard={inApp}>
+                  <Stack.Screen name="(app)" />
+                </Stack.Protected>
+
+                <Stack.Protected guard={needsOrg}>
+                  {/* create-org must be addressable as its own screen name */}
+                  <Stack.Screen name="create-organization" />
+                </Stack.Protected>
+
+                <Stack.Protected guard={loggedOut}>
+                  <Stack.Screen name="(auth)" />
+                </Stack.Protected>
               </Stack>
             )}
+
             <ConfirmDialogHost />
-          </KeyboardProvider>
-        </SafeAreaProvider>
+          </SafeAreaProvider>
+        </KeyboardProvider>
       </GestureHandlerRootView>
     </ErrorBoundary>
   );

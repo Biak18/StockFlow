@@ -66,7 +66,7 @@ export function RegisterForm() {
       if (profile) setProfile(profile);
 
       // New users typically have no org yet
-      router.replace("/(auth)/create-organization");
+      // router.replace("/(auth)/create-organization");
     } catch (err) {
       setFormError(
         err instanceof Error ? err.message : "Unable to create account",

@@ -27,6 +27,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       backgroundColor: "#0F172A",
     },
     package: "com.chantoewhan.stockflow",
+    "googleServicesFile": "./google-services.json",
     softwareKeyboardLayoutMode: "pan",
     permissions: [
       "CAMERA",
@@ -35,7 +36,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       "RECEIVE_BOOT_COMPLETED",
       "VIBRATE",
     ],
-    "googleServicesFile": "/google-services.json",
   },
   web: {
     bundler: "metro",
