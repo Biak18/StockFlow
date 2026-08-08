@@ -15,6 +15,16 @@ export interface SyncQueueItem {
   updated_at: string;
 }
 
+// types for sync queue
+export type ProductImageUploadJob = {
+  type: "product_image_upload";
+  product_id: string;
+  organization_id: string;
+  local_uri: string; // file://... in document directory
+  mime_type: string;
+  file_name: string;
+};
+
 function uuid() {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0;

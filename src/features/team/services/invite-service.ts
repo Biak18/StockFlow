@@ -42,8 +42,29 @@ export const inviteService = {
       }
       throw new Error(error.message);
     }
-
+    try {
+      await this.sendEmail(data.id);
+    } catch (err) {
+      console.warn("Invite email failed", err);
+      // Optional: surface soft warning to UI
+    }
     return data;
+  },
+
+  async sendEmail(inviteId: string): Promise<void> {
+    const { data, error } = await supabase.functions.invoke(
+      "send-invite-email",
+      {
+        body: { invite_id: inviteId },
+      },
+    );
+
+    if (error) {
+      throw new Error(error.message || "Failed to send invite email");
+    }
+    if (data?.error) {
+      throw new Error(data.error);
+    }
   },
 
   async revoke(id: string, organizationId: string): Promise<void> {
@@ -61,10 +82,12 @@ export const inviteService = {
    * Accept pending invite for the current auth user (by email).
    * Returns null if no pending invite.
    */
-  async acceptPending(): Promise<{
-    organization: Organization;
-    membership: OrganizationMember;
-  } | null> {
+  async acceptPending(): Promise<
+    {
+      organization: Organization;
+      membership: OrganizationMember;
+    } | null
+  > {
     const { data, error } = await supabase.rpc("accept_organization_invite");
 
     if (error) throw new Error(error.message);

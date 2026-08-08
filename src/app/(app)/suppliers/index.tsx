@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   Pressable,
+  RefreshControl,
   TextInput as RNTextInput,
   StyleSheet,
   Text,
@@ -15,7 +16,6 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
-import { FadeIn } from "@/components/motion";
 import { Button, Skeleton } from "@/components/ui";
 import { supplierService } from "@/features/suppliers/services/supplier-service";
 import {
@@ -42,6 +42,10 @@ export default function SuppliersScreen() {
   useEffect(() => {
     if (organization?.id) fetchSuppliers(organization.id);
   }, [organization?.id, fetchSuppliers]);
+
+  const onRefresh = () => {
+    if (organization?.id) fetchSuppliers(organization.id, { force: true });
+  };
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -100,10 +104,10 @@ export default function SuppliersScreen() {
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
-      <FadeIn>
-        <View style={[styles.header]}>
-          <View style={styles.headerLeft}>
-            {/* <Pressable
+      {/* <FadeIn> */}
+      <View style={[styles.header]}>
+        <View style={styles.headerLeft}>
+          {/* <Pressable
               onPress={() => router.back()}
               hitSlop={10}
               style={styles.backBtn}
@@ -115,11 +119,11 @@ export default function SuppliersScreen() {
               />
             </Pressable> */}
 
-            <Text style={[styles.title, { color: theme.colors.text }]}>
-              Suppliers
-            </Text>
-          </View>
-          {/* <Pressable
+          <Text style={[styles.title, { color: theme.colors.text }]}>
+            Suppliers
+          </Text>
+        </View>
+        {/* <Pressable
             onPress={() => router.push("/(app)/suppliers/create")}
             style={[
               styles.addBtn,
@@ -132,8 +136,8 @@ export default function SuppliersScreen() {
           >
             <Ionicons name="add" size={20} color={theme.colors.text} />
           </Pressable> */}
-        </View>
-      </FadeIn>
+      </View>
+      {/* </FadeIn> */}
 
       <View style={styles.searchWrap}>
         <View
@@ -285,6 +289,9 @@ export default function SuppliersScreen() {
               </View>
             </Pressable>
           )}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={onRefresh} />
+          }
         />
       )}
 

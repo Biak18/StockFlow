@@ -9,13 +9,26 @@ async function initDatabase(): Promise<SQLite.SQLiteDatabase> {
 
   // Critical pragmas + schema in one go
   await database.execAsync(CREATE_TABLES_SQL);
-
+  await migrateProductsLocalImage(database);
   await database.runAsync(
     `INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)`,
     ["schema_version", String(SCHEMA_VERSION)],
   );
 
   return database;
+}
+
+async function migrateProductsLocalImage(db: SQLite.SQLiteDatabase) {
+  const cols = await db.getAllAsync<{ name: string }>(
+    `PRAGMA table_info(products)`,
+  );
+  const hasLocal = cols.some((c) => c.name === "local_image_uri");
+
+  if (!hasLocal) {
+    await db.execAsync(
+      `ALTER TABLE products ADD COLUMN local_image_uri TEXT`,
+    );
+  }
 }
 
 /**

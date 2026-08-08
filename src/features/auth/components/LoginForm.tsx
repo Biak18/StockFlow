@@ -40,7 +40,7 @@ export function LoginForm() {
     try {
       setLoading(true);
       setFormError(null);
-      useAuthStore.getState().setResolvingOrg(true);
+      // useAuthStore.getState().setResolvingOrg(true);
 
       const { session, user } = await authService.signIn(values);
 
@@ -65,9 +65,10 @@ export function LoginForm() {
 
       // setOrganization(membership.organization, membership.membership);
       setOrganization(workspace.organization, workspace.membership);
-      useAuthStore.getState().setResolvingOrg(false);
+      // useAuthStore.getState().setResolvingOrg(false);
       router.replace("/(app)");
     } catch (err) {
+      // useAuthStore.getState().setResolvingOrg(false);
       setFormError(err instanceof Error ? err.message : "Unable to sign in");
     } finally {
       setLoading(false);

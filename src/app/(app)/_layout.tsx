@@ -81,7 +81,6 @@ export default function AppLayout() {
           name="settings"
           options={{
             title: "Settings",
-            popToTopOnBlur: true,
             tabBarIcon: ({ color, focused }) => (
               <Ionicons
                 name={focused ? "settings" : "settings-outline"}

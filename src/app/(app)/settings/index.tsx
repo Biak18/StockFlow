@@ -17,8 +17,24 @@ import {
 
 import { FadeIn, Stagger } from "@/components/motion";
 import { useSignOut } from "@/features/auth/hooks/useSignOut";
+import { resetLocalData } from "@/services/database/reset-local";
+import {
+  clearLowStockNotifHash,
+  ensureNotificationPermission,
+  getLowStockNotifEnabled,
+  notifyLowStockIfNeeded,
+  setLowStockNotifEnabled,
+} from "@/services/notifications/low-stock";
 import { syncEngine } from "@/services/sync/sync-engine";
-import { alertDialog, confirmDialog, useAuthStore, useUIStore } from "@/stores";
+import {
+  alertDialog,
+  confirmDialog,
+  useAuthStore,
+  useCategoriesStore,
+  useProductsStore,
+  useSuppliersStore,
+  useUIStore,
+} from "@/stores";
 
 type ThemeMode = "light" | "dark" | "system";
 
@@ -100,6 +116,9 @@ export default function SettingsScreen() {
   const setThemeMode = useUIStore((s) => s.setThemeMode);
   const isOnline = useUIStore((s) => s.isOnline);
   const isSyncing = useUIStore((s) => s.isSyncing);
+  const fetchProducts = useProductsStore((p) => p.fetchProducts);
+  const fetchCategories = useCategoriesStore((c) => c.fetchCategories);
+  const fetchSuppliers = useSuppliersStore((s) => s.fetchSuppliers);
 
   const profile = useAuthStore((s) => s.profile);
   const organization = useAuthStore((s) => s.currentOrganization);
@@ -108,6 +127,12 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { signOut, loading: signingOut } = useSignOut();
   const [pendingCount, setPendingCount] = useState(0);
+
+  const [lowStockOn, setLowStockOn] = useState(true);
+
+  useEffect(() => {
+    getLowStockNotifEnabled().then(setLowStockOn);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -137,6 +162,26 @@ export default function SettingsScreen() {
       : pendingCount > 0
         ? `${pendingCount} pending`
         : "Up to date";
+
+  const handleReset = async () => {
+    const ok = await confirmDialog({
+      title: "Reset offline data?",
+      message:
+        "Clears the local cache and sync queue on this device. Cloud data is not deleted. The app will reload data from the server if you are online.",
+      confirmLabel: "Reset",
+      destructive: true,
+    });
+
+    if (!ok) return;
+
+    await resetLocalData();
+
+    if (organization?.id && isOnline) {
+      await fetchProducts(organization.id, { force: true });
+      await fetchCategories(organization.id);
+      await fetchSuppliers(organization.id);
+    }
+  };
 
   const handleSignOut = async () => {
     const ok = await confirmDialog({
@@ -302,6 +347,28 @@ export default function SettingsScreen() {
             ]}
           >
             <SettingsRow
+              icon="notifications-outline"
+              title="Low stock alerts"
+              subtitle={lowStockOn ? "On" : "Off"}
+              right={
+                <Switch
+                  value={lowStockOn}
+                  onValueChange={async (v) => {
+                    setLowStockOn(v);
+                    await setLowStockNotifEnabled(v);
+                    if (v) {
+                      await ensureNotificationPermission();
+                      await clearLowStockNotifHash();
+                      await notifyLowStockIfNeeded(
+                        useProductsStore.getState().products,
+                      );
+                    }
+                  }}
+                />
+              }
+            />
+
+            <SettingsRow
               icon="moon-outline"
               title="Appearance"
               subtitle={themeLabel}
@@ -328,14 +395,14 @@ export default function SettingsScreen() {
               subtitle={syncSubtitle}
               onPress={handleSyncNow}
             />
-          </View>
 
-          <SettingsRow
-            icon="people-outline"
-            title="Team & invites"
-            subtitle="Invite teammates by email"
-            onPress={() => router.push("/(app)/settings/team")}
-          />
+            <SettingsRow
+              icon="people-outline"
+              title="Team & invites"
+              subtitle="Invite teammates by email"
+              onPress={() => router.push("/(app)/settings/team")}
+            />
+          </View>
 
           {/* Account */}
           <Text
@@ -364,6 +431,13 @@ export default function SettingsScreen() {
               icon="log-out-outline"
               title={signingOut ? "Signing out…" : "Sign out"}
               onPress={handleSignOut}
+              danger
+            />
+
+            <SettingsRow
+              icon="trash-bin-outline"
+              title={"Reset Local Data"}
+              onPress={handleReset}
               danger
             />
           </View>

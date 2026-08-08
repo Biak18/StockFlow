@@ -20,7 +20,6 @@ import {
   SelectField,
   TextInput,
 } from "@/components/ui";
-import { getNetworkOnline } from "@/services/network";
 import {
   alertDialog,
   useAuthStore,
@@ -114,14 +113,14 @@ export function ProductForm({
 
   const handlePickLibrary = async () => {
     try {
-      if (!getNetworkOnline()) {
-        await alertDialog({
-          title: "Offline",
-          message: "Images can only be uploaded while online.",
-          confirmLabel: "OK",
-        });
-        return;
-      }
+      // if (!getNetworkOnline()) {
+      //   await alertDialog({
+      //     title: "Offline",
+      //     message: "Images can only be uploaded while online.",
+      //     confirmLabel: "OK",
+      //   });
+      //   return;
+      // }
       const image = await imageService.pickFromLibrary();
       if (image) {
         setPendingImage(image);
@@ -138,14 +137,14 @@ export function ProductForm({
 
   const handlePickCamera = async () => {
     try {
-      if (!getNetworkOnline()) {
-        await alertDialog({
-          title: "Offline",
-          message: "Images can only be uploaded while online.",
-          confirmLabel: "OK",
-        });
-        return;
-      }
+      // if (!getNetworkOnline()) {
+      //   await alertDialog({
+      //     title: "Offline",
+      //     message: "Images can only be uploaded while online.",
+      //     confirmLabel: "OK",
+      //   });
+      //   return;
+      // }
       const image = await imageService.pickFromCamera();
       if (image) {
         setPendingImage(image);

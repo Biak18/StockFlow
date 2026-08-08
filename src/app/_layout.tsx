@@ -12,10 +12,13 @@ import { getDatabase } from "@/database/client";
 import { authService } from "@/features/auth";
 import { resolveWorkspace } from "@/features/auth/services/resolve-workspace";
 import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import { setupNotificationChannels } from "@/services/notifications/low-stock";
+import { registerAndSavePushToken } from "@/services/notifications/register-push";
 import { supabase } from "@/services/supabase";
 import { syncEngine } from "@/services/sync/sync-engine";
 import { loadThemeMode } from "@/services/theme-storage";
 import { useAuthStore, useUIStore } from "@/stores";
+import * as Notifications from "expo-notifications";
 import * as SystemUI from "expo-system-ui";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -44,6 +47,18 @@ export default function RootLayout() {
   const setOrganization = useAuthStore((s) => s.setOrganization);
   const setResolvingOrg = useAuthStore((s) => s.setResolvingOrg);
   const reset = useAuthStore((s) => s.reset);
+
+  useEffect(() => {
+    const sub = Notifications.addNotificationResponseReceivedListener((res) => {
+      const filter = res.notification.request.content.data?.filter;
+      if (filter === "low" || filter === "out") {
+        router.push("/(app)/products"); // chips can read a global param later
+      }
+    });
+    setupNotificationChannels();
+    return () => sub.remove();
+  }, []);
+
   // Theme hydrate + system scheme
   useEffect(() => {
     let mounted = true;
@@ -91,7 +106,7 @@ export default function RootLayout() {
         if (session?.user && isMounted) {
           setSession(session);
           setResolvingOrg(true);
-
+          registerAndSavePushToken(session.user.id).catch(console.warn);
           try {
             const profile = await authService.getProfile(session.user.id);
             if (profile) setProfile(profile);

@@ -11,8 +11,8 @@ export const productLocal = {
         `INSERT OR REPLACE INTO products (
         id, organization_id, name, sku, barcode, category_id, supplier_id,
         cost_price, selling_price, quantity, unit, image_path, description,
-        min_stock_level, created_at, updated_at, deleted_at, version
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        min_stock_level, created_at, updated_at, deleted_at, version,local_image_uri
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           p.id,
           p.organization_id,
@@ -32,6 +32,7 @@ export const productLocal = {
           p.updated_at,
           p.deleted_at,
           p.version,
+          p.local_image_uri ?? null,
         ],
       );
     }

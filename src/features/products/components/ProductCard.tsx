@@ -10,7 +10,9 @@ interface ProductCardProps {
 
 export function ProductCard({ product, onPress }: ProductCardProps) {
   const theme = useUIStore((s) => s.theme);
-  const imageUrl = useProductImage(product.image_path);
+  const imageUrl = useProductImage(
+    product.image_path ?? product.local_image_uri,
+  );
 
   const isLowStock =
     product.min_stock_level > 0 && product.quantity <= product.min_stock_level;

@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, useSegments } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import {
   SafeAreaView,
@@ -12,8 +12,10 @@ import {
   imageService,
   type PickedImage,
 } from "@/features/products/services/image-service";
+import { persistLocalProductImage } from "@/features/products/services/local-image";
 import { productRepository } from "@/features/products/services/product-repository";
 import { getNetworkOnline } from "@/services/network";
+import { syncQueue } from "@/services/sync/sync-queue";
 import { useAuthStore, useProductsStore, useUIStore } from "@/stores";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -23,7 +25,7 @@ export default function CreateProductScreen() {
   const addProduct = useProductsStore((s) => s.addProduct);
   const updateProduct = useProductsStore((s) => s.updateProduct);
   const insets = useSafeAreaInsets();
-
+  const segments = useSegments();
   const { barcode: prefillBarcode } = useLocalSearchParams<{
     barcode?: string;
   }>();
@@ -57,7 +59,29 @@ export default function CreateProductScreen() {
 
     if (pendingImage) {
       if (!getNetworkOnline()) {
-        // Product is saved; image skipped offline
+        const localUri = await persistLocalProductImage(
+          product.id,
+          pendingImage.uri,
+          pendingImage.fileName?.split(".").pop() ?? "jpg",
+        );
+
+        await syncQueue.enqueue({
+          tableName: "product_images",
+          recordId: product.id,
+          operation: "update",
+          payload: {
+            product_id: product.id,
+            organization_id: organization.id,
+            local_uri: localUri,
+            mime_type: pendingImage.mimeType ?? "image/jpeg",
+            file_name: pendingImage.fileName ?? `product-${product.id}.jpg`,
+          },
+        });
+
+        // optional: show local preview from store
+        updateProduct(product.id, {
+          local_image_uri: localUri,
+        } as any);
       } else {
         const path = await imageService.upload(
           organization.id,
@@ -71,7 +95,8 @@ export default function CreateProductScreen() {
       }
     }
 
-    router.back();
+    // router.back();
+    router.replace("/(app)/products");
   };
 
   return (
@@ -83,7 +108,7 @@ export default function CreateProductScreen() {
         {/* Top bar */}
         <View style={styles.topBar}>
           <Pressable
-            onPress={() => router.back()}
+            onPress={() => router.replace("/(app)/products")}
             style={styles.iconBtn}
             hitSlop={10}
           >

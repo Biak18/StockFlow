@@ -15,6 +15,10 @@ import type { StockMovementFormValues } from "@/features/inventory/schemas/inven
 import { inventoryRepository } from "@/features/inventory/services/inventory-repository";
 import type { InventoryTxnType } from "@/features/inventory/types";
 import { useProduct } from "@/features/products/hooks/useProduct";
+import {
+  clearLowStockNotifHash,
+  notifyLowStockIfNeeded,
+} from "@/services/notifications/low-stock";
 import { useAuthStore, useProductsStore, useUIStore } from "@/stores";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -60,6 +64,8 @@ export default function StockMovementScreen() {
       updated_at: updated.updated_at,
     });
     useUIStore.getState().bumpInventoryRevision();
+    await clearLowStockNotifHash(); // allow a new notification
+    await notifyLowStockIfNeeded(useProductsStore.getState().products);
     router.back();
   };
 

@@ -81,6 +81,22 @@ export const imageService = {
     return path;
   },
 
+  async uploadFromLocalFile(params: {
+    organizationId: string;
+    productId: string;
+    localUri: string;
+    mimeType: string;
+    fileName: string;
+  }): Promise<string> {
+    // Reuse the same storage path + upload logic as upload()
+    // Input is already a persisted file:// URI
+    return this.upload(params.organizationId, params.productId, {
+      uri: params.localUri,
+      mimeType: params.mimeType,
+      fileName: params.fileName,
+    });
+  },
+
   async getSignedUrl(
     path: string,
     expiresIn = 60 * 60,

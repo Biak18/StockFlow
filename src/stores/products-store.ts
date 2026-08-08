@@ -1,5 +1,6 @@
 import { productRepository } from "@/features/products/services/product-repository";
 import type { Product } from "@/features/products/types";
+import { notifyLowStockIfNeeded } from "@/services/notifications/low-stock";
 import { create } from "zustand";
 
 interface ProductsState {
@@ -69,6 +70,7 @@ export const useProductsStore = create<ProductsState>((set, get) => ({
 
     try {
       const data = await productRepository.list(organizationId);
+      await notifyLowStockIfNeeded(get().products);
       set({
         products: data,
         loading: false,
@@ -98,8 +100,9 @@ export const useProductsStore = create<ProductsState>((set, get) => ({
     } catch (err) {
       set({
         refreshing: false,
-        error:
-          err instanceof Error ? err.message : "Failed to refresh products",
+        error: err instanceof Error
+          ? err.message
+          : "Failed to refresh products",
       });
     }
   },
@@ -107,7 +110,7 @@ export const useProductsStore = create<ProductsState>((set, get) => ({
   addProduct: (product) => {
     set((state) => ({
       products: [product, ...state.products].sort((a, b) =>
-        a.name.localeCompare(b.name),
+        a.name.localeCompare(b.name)
       ),
     }));
   },

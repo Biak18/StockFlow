@@ -35,6 +35,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       "RECEIVE_BOOT_COMPLETED",
       "VIBRATE",
     ],
+    "googleServicesFile": "/google-services.json",
   },
   web: {
     bundler: "metro",
@@ -49,7 +50,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         backgroundColor: "#0F172A",
         android: {
           image: "./assets/images/splash-icon.png",
-          imageWidth: 200,
+          imageWidth: 700,
         },
       },
     ],
@@ -76,6 +77,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       // },
     ],
     "expo-sqlite",
+    "expo-sharing",
   ],
   experiments: {
     typedRoutes: true,

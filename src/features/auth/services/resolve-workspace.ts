@@ -5,10 +5,12 @@ import { authService } from "./auth-service";
 /**
  * After auth: membership first, else accept invite, else null (create org).
  */
-export async function resolveWorkspace(userId: string): Promise<{
-  organization: Organization;
-  membership: OrganizationMember;
-} | null> {
+export async function resolveWorkspace(userId: string): Promise<
+  {
+    organization: Organization;
+    membership: OrganizationMember;
+  } | null
+> {
   const existing = await authService.getMembership(userId);
 
   if (existing?.organization && existing?.membership) {

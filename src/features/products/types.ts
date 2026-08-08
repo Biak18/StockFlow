@@ -19,14 +19,17 @@ export interface Product {
   updated_at: string;
   deleted_at: string | null;
   version: number;
+  local_image_uri?: string | null;
 }
 
-export type ProductInsert = Omit<
-  Product,
-  "id" | "created_at" | "updated_at" | "deleted_at" | "version" | "quantity"
-> & {
-  quantity?: number;
-};
+export type ProductInsert =
+  & Omit<
+    Product,
+    "id" | "created_at" | "updated_at" | "deleted_at" | "version" | "quantity"
+  >
+  & {
+    quantity?: number;
+  };
 
 export type ProductUpdate = Partial<
   Omit<Product, "id" | "organization_id" | "created_at" | "updated_at">

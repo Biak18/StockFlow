@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import {
   Pressable,
+  RefreshControl,
   TextInput as RNTextInput,
   StyleSheet,
   Text,
@@ -14,7 +15,6 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
-import { FadeIn } from "@/components/motion";
 import { Button, SkeletonProductRow } from "@/components/ui";
 import { BarcodeScannerModal } from "@/features/products/components/BarcodeScannerModal";
 import { ProductCard } from "@/features/products/components/ProductCard";
@@ -115,12 +115,12 @@ export default function ProductsScreen() {
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
-      <FadeIn>
-        <View style={[styles.header]}>
-          <Text style={[styles.title, { color: theme.colors.text }]}>
-            Products
-          </Text>
-          {/* <Pressable
+      {/* <FadeIn> */}
+      <View style={[styles.header]}>
+        <Text style={[styles.title, { color: theme.colors.text }]}>
+          Products
+        </Text>
+        {/* <Pressable
             onPress={handleCreate}
             style={[
               styles.headerBtn,
@@ -134,8 +134,8 @@ export default function ProductsScreen() {
           >
             <Ionicons name="add" size={20} color={theme.colors.text} />
           </Pressable> */}
-        </View>
-      </FadeIn>
+      </View>
+      {/* </FadeIn> */}
 
       {/* Search + scan */}
       <View style={styles.searchRow}>
@@ -305,6 +305,9 @@ export default function ProductsScreen() {
           refreshing={refreshing}
           keyExtractor={(item) => item.id}
           keyboardShouldPersistTaps="handled"
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         />
       )}
 

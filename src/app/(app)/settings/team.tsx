@@ -17,9 +17,12 @@ import type { InviteRole, OrganizationInvite } from "@/features/team";
 import { inviteService } from "@/features/team";
 import { alertDialog, confirmDialog, useAuthStore, useUIStore } from "@/stores";
 
+import { memberService } from "@/features/team/services/member-service";
+import type { MemberRole, OrgMemberRow } from "@/features/team/types";
+
 const inviteSchema = z.object({
   email: z.string().email("Enter a valid email"),
-  role: z.enum(["member", "admin"]),
+  role: z.enum(["admin", "manager", "staff", "viewer"]),
 });
 
 type InviteFormValues = z.infer<typeof inviteSchema>;
@@ -37,6 +40,8 @@ export default function TeamScreen() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [resendingId, setResendingId] = useState<string | null>(null);
+  const [members, setMembers] = useState<OrgMemberRow[]>([]);
 
   const {
     control,
@@ -45,8 +50,14 @@ export default function TeamScreen() {
     formState: { errors },
   } = useForm<InviteFormValues>({
     resolver: zodResolver(inviteSchema),
-    defaultValues: { email: "", role: "member" },
+    defaultValues: { email: "", role: "staff" },
   });
+
+  const loadMembers = useCallback(async () => {
+    if (!organization?.id) return;
+    const data = await memberService.list(organization.id);
+    setMembers(data);
+  }, [organization?.id]);
 
   const load = useCallback(async () => {
     if (!organization?.id) return;
@@ -66,7 +77,8 @@ export default function TeamScreen() {
 
   useEffect(() => {
     load();
-  }, [load]);
+    loadMembers();
+  }, [load, loadMembers]);
 
   const onInvite = async (values: InviteFormValues) => {
     if (!organization?.id || !session?.user?.id) return;
@@ -82,12 +94,17 @@ export default function TeamScreen() {
         invitedBy: session.user.id,
       });
 
-      reset({ email: "", role: "member" });
+      reset({ email: "", role: "staff" });
       await load();
+      // await alertDialog({
+      //   title: "Invite created",
+      //   message:
+      //     "When this person registers or signs in with that email, they will join your organization automatically.",
+      // });
       await alertDialog({
-        title: "Invite created",
+        title: "Invite sent",
         message:
-          "When this person registers or signs in with that email, they will join your organization automatically.",
+          "An email was sent. When they register or sign in with that address, they will join this workspace automatically.",
       });
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Failed to invite");
@@ -114,6 +131,75 @@ export default function TeamScreen() {
       await alertDialog({
         title: "Error",
         message: err instanceof Error ? err.message : "Failed to revoke",
+      });
+    }
+  };
+
+  const onResend = async (invite: OrganizationInvite) => {
+    if (invite.status !== "pending") return;
+
+    try {
+      setResendingId(invite.id);
+      await inviteService.sendEmail(invite.id);
+      await alertDialog({
+        title: "Email sent",
+        message: `Invite email was sent again to ${invite.email}.`,
+      });
+    } catch (err) {
+      await alertDialog({
+        title: "Could not send",
+        message:
+          err instanceof Error ? err.message : "Failed to resend invite email",
+      });
+    } finally {
+      setResendingId(null);
+    }
+  };
+
+  const onChangeRole = async (member: OrgMemberRow) => {
+    if (member.role === "owner") return;
+    if (!canInvite) return;
+
+    const next: Exclude<MemberRole, "owner"> =
+      member.role === "admin" ? "staff" : "admin";
+
+    const ok = await confirmDialog({
+      title: "Change role?",
+      message: `Set ${member.profile?.full_name || member.profile?.email || "this user"} to ${next}?`,
+      confirmLabel: "Change",
+    });
+    if (!ok) return;
+
+    try {
+      await memberService.updateRole(member.id, next);
+      await loadMembers();
+    } catch (err) {
+      await alertDialog({
+        title: "Error",
+        message: err instanceof Error ? err.message : "Failed to update role",
+      });
+    }
+  };
+
+  const onRemoveMember = async (member: OrgMemberRow) => {
+    if (member.role === "owner") return;
+    if (member.user_id === session?.user?.id) return;
+
+    const ok = await confirmDialog({
+      title: "Remove member?",
+      message: `Remove ${member.profile?.full_name || member.profile?.email || "this user"} from the workspace?`,
+      confirmLabel: "Remove",
+      destructive: true,
+    });
+    if (!ok) return;
+
+    try {
+      await memberService.remove(member.id);
+      await loadMembers();
+    } catch (err) {
+      await alertDialog({
+        title: "Error",
+        message: err instanceof Error ? err.message : "Failed to remove member",
       });
     }
   };
@@ -200,7 +286,7 @@ export default function TeamScreen() {
                     name="role"
                     render={({ field: { value, onChange } }) => (
                       <View style={styles.roleRow}>
-                        {(["member", "admin"] as const).map((r) => {
+                        {(["staff", "admin"] as const).map((r) => {
                           const active = value === r;
                           return (
                             <Pressable
@@ -259,6 +345,95 @@ export default function TeamScreen() {
               )}
 
               <Text style={[styles.section, { color: theme.colors.text }]}>
+                Members
+              </Text>
+
+              {members.map((m) => {
+                const title =
+                  m.profile?.full_name || m.profile?.email || "User";
+                const subtitle = [m.profile?.email, m.role]
+                  .filter(Boolean)
+                  .join(" · ");
+
+                return (
+                  <View
+                    key={m.id}
+                    style={[
+                      styles.inviteRow,
+                      {
+                        backgroundColor: theme.colors.surface,
+                        borderColor: theme.colors.border,
+                      },
+                    ]}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text
+                        style={{ color: theme.colors.text, fontWeight: "700" }}
+                      >
+                        {title}
+                      </Text>
+                      <Text
+                        style={{
+                          color: theme.colors.textSecondary,
+                          fontSize: 12,
+                          marginTop: 2,
+                        }}
+                      >
+                        {subtitle}
+                      </Text>
+                    </View>
+
+                    {canInvite &&
+                    m.role !== "owner" &&
+                    m.user_id !== session?.user?.id ? (
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          gap: 12,
+                          alignItems: "center",
+                        }}
+                      >
+                        <Pressable onPress={() => onChangeRole(m)} hitSlop={8}>
+                          <Text
+                            style={{
+                              color: theme.colors.primary,
+                              fontWeight: "700",
+                            }}
+                          >
+                            Role
+                          </Text>
+                        </Pressable>
+                        <Pressable
+                          onPress={() => onRemoveMember(m)}
+                          hitSlop={8}
+                        >
+                          <Text
+                            style={{
+                              color: theme.colors.danger,
+                              fontWeight: "700",
+                            }}
+                          >
+                            Remove
+                          </Text>
+                        </Pressable>
+                      </View>
+                    ) : (
+                      <Text
+                        style={{
+                          color: theme.colors.textTertiary,
+                          fontSize: 12,
+                          fontWeight: "700",
+                          textTransform: "capitalize",
+                        }}
+                      >
+                        {m.role}
+                      </Text>
+                    )}
+                  </View>
+                );
+              })}
+
+              <Text style={[styles.section, { color: theme.colors.text }]}>
                 Invites
               </Text>
             </View>
@@ -298,13 +473,37 @@ export default function TeamScreen() {
                 </Text>
               </View>
               {canInvite && item.status === "pending" ? (
-                <Pressable onPress={() => onRevoke(item)} hitSlop={8}>
-                  <Text
-                    style={{ color: theme.colors.danger, fontWeight: "700" }}
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 14,
+                  }}
+                >
+                  <Pressable
+                    onPress={() => onResend(item)}
+                    disabled={resendingId === item.id}
+                    hitSlop={8}
                   >
-                    Revoke
-                  </Text>
-                </Pressable>
+                    <Text
+                      style={{
+                        color: theme.colors.primary,
+                        fontWeight: "700",
+                        opacity: resendingId === item.id ? 0.5 : 1,
+                      }}
+                    >
+                      {resendingId === item.id ? "Sending…" : "Resend"}
+                    </Text>
+                  </Pressable>
+
+                  <Pressable onPress={() => onRevoke(item)} hitSlop={8}>
+                    <Text
+                      style={{ color: theme.colors.danger, fontWeight: "700" }}
+                    >
+                      Revoke
+                    </Text>
+                  </Pressable>
+                </View>
               ) : null}
             </View>
           )}

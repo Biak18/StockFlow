@@ -89,7 +89,8 @@ CREATE TABLE IF NOT EXISTS products (
   created_at TEXT NOT NULL,
   updated_at TEXT NOT NULL,
   deleted_at TEXT,
-  version INTEGER NOT NULL DEFAULT 1
+  version INTEGER NOT NULL DEFAULT 1,
+  local_image_uri TEXT
 );
 
 CREATE TABLE IF NOT EXISTS inventory_transactions (

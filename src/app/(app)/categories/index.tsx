@@ -1,4 +1,3 @@
-import { FadeIn } from "@/components/motion";
 import { Button, Skeleton } from "@/components/ui";
 import { categoryService } from "@/features/categories/services/category-service";
 import {
@@ -15,6 +14,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   Pressable,
+  RefreshControl,
   TextInput as RNTextInput,
   StyleSheet,
   Text,
@@ -41,6 +41,10 @@ export default function CategoriesScreen() {
   useEffect(() => {
     if (organization?.id) fetchCategories(organization.id);
   }, [organization?.id, fetchCategories]);
+
+  const onRefresh = () => {
+    if (organization?.id) fetchCategories(organization.id, { force: true });
+  };
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -99,10 +103,10 @@ export default function CategoriesScreen() {
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
-      <FadeIn>
-        <View style={[styles.header]}>
-          <View style={styles.headerLeft}>
-            {/* <Pressable
+      {/* <FadeIn> */}
+      <View style={[styles.header]}>
+        <View style={styles.headerLeft}>
+          {/* <Pressable
               onPress={() => router.back()}
               hitSlop={10}
               style={styles.backBtn}
@@ -114,11 +118,11 @@ export default function CategoriesScreen() {
               />
             </Pressable> */}
 
-            <Text style={[styles.title, { color: theme.colors.text }]}>
-              Categories
-            </Text>
-          </View>
-          {/* <Pressable
+          <Text style={[styles.title, { color: theme.colors.text }]}>
+            Categories
+          </Text>
+        </View>
+        {/* <Pressable
             onPress={() => router.push("/(app)/categories/create")}
             style={[
               styles.addBtn,
@@ -131,8 +135,8 @@ export default function CategoriesScreen() {
           >
             <Ionicons name="add" size={20} color={theme.colors.text} />
           </Pressable> */}
-        </View>
-      </FadeIn>
+      </View>
+      {/* </FadeIn> */}
 
       <View style={styles.searchWrap}>
         <View
@@ -284,6 +288,9 @@ export default function CategoriesScreen() {
               </View>
             </Pressable>
           )}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={onRefresh} />
+          }
         />
       )}
 
