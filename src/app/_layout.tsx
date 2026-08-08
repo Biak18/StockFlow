@@ -254,7 +254,7 @@ export default function RootLayout() {
 
                 <Stack.Protected guard={needsOrg}>
                   {/* create-org must be addressable as its own screen name */}
-                  <Stack.Screen name="create-organization" />
+                  <Stack.Screen name="(auth)/create-organization" />
                 </Stack.Protected>
 
                 <Stack.Protected guard={loggedOut}>
