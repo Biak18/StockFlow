@@ -22,6 +22,14 @@ Track products, stock movements, categories, suppliers, and team access with off
   - Owner
   - Admin
   - Member
+- Team invitations by email (Resend + Edge Function `send-invite-email`)
+- Auto-join organization on register/sign-in (`accept_organization_invite`)
+- Team management
+  - List members
+  - Change roles (`admin` / `member`)
+  - Remove members
+  - Resend / revoke invites
+- Role-based access: Owner · Admin · Member
 
 ---
 
@@ -60,21 +68,41 @@ Track products, stock movements, categories, suppliers, and team access with off
 
 - SQLite local database
 - Offline product cache
-- Sync queue
-- Automatic synchronization when back online
-- Offline status indicators
+- Sync queue (`insert` / `update` / `delete` + `product_images` jobs)
+- Automatic flush when back online
+- Offline product image queue (persist locally → upload on sync)
+- Local image preview while upload is pending
+- **Reset offline data** (clears SQLite cache, queue, and local images on device)
+- Offline / pending-sync status indicators
 
 ---
 
 ## User Experience
 
-- Light / Dark / System theme
-- Theme persistence
-- Skeleton loading
-- Smooth screen animations
-- Custom confirmation dialogs
-- Keyboard-aware forms
+- Light / Dark / System theme (persisted)
+- Skeleton loading + enter animations
+- Custom confirm / alert dialogs (replaces system `Alert` for in-app flows)
+- Keyboard-aware forms (`react-native-keyboard-controller`)
 - Tab bar hides while keyboard is visible
+- Number inputs with thousand separators (prices / quantities)
+- Auth boot gate + `Stack.Protected` (no flash between login / create-org / app)
+
+---
+
+## Notifications
+
+### Local (on-device)
+
+- Low / out-of-stock alerts after product fetch or stock movement
+- Cooldown via content hash (avoids spam on every refresh)
+- Toggle in Settings
+
+### Remote (team)
+
+- Expo push token stored on `profiles.push_token`
+- Android FCM via EAS credentials + `googleServicesFile`
+- Database webhook on `products` **UPDATE** → Edge Function `notify-low-stock`
+- Pushes to org members when stock **enters** low or out-of-stock state
 
 ---
 
@@ -182,12 +210,41 @@ yarn
 
 Create a `.env` file:
 
-```env
+````env
 EXPO_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-```
+
+## 2b. Push / FCM (development builds)
+
+1. Place `google-services.json` at the project root (or upload as EAS **File** env `GOOGLE_SERVICES_JSON`).
+2. In `app.config.ts`:
+
+```ts
+android: {
+  googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? "./google-services.json",
+  package: "com.chantoewhan.stockflow",
+}
+````
 
 > **Important:** Never commit your Service Role Key to the client application.
+
+---
+
+### Configure Supabase → extend list
+
+````markdown
+Also configure:
+
+- Edge Functions
+  - `send-invite-email` (Resend)
+  - `notify-low-stock` (Expo Push API)
+- Database webhook: `products` UPDATE → `notify-low-stock`
+- RPCs
+  - `update_member_role`
+  - `remove_organization_member`
+  - `accept_organization_invite`
+- Secrets: `RESEND_API_KEY`, `INVITE_FROM_EMAIL`
+- Column: `profiles.push_token`
 
 ---
 
@@ -223,6 +280,7 @@ Configure:
 ```bash
 npx expo start
 ```
+````
 
 Then:
 
@@ -290,6 +348,23 @@ They are prompted to create a new organization and automatically become the **Ow
 
 ---
 
+### Members
+
+Owners/Admins can:
+
+- View members
+- Promote/demote between `admin` and `member`
+- Remove members (owner protected; cannot remove self)
+
+### Invite email
+
+1. Invite row is created under RLS
+2. App invokes `send-invite-email`
+3. Resend delivers the message (verified domain required for non-test recipients)
+4. **Resend** action re-invokes the same function for pending invites
+
+---
+
 ### Team Invitations
 
 Owners and Admins can invite members via email.
@@ -316,14 +391,10 @@ Each organization's data is completely isolated using Row Level Security.
 
 When offline:
 
-- Product list loads from SQLite
-- Product details load from SQLite
-- Create, Update, and Stock Movements are queued
-- Pending synchronization is displayed
-
-Current limitation:
-
-- Product image uploads require an internet connection.
+- Product list/detail load from SQLite
+- Creates, updates, and stock movements are queued
+- Product images are stored on device and queued as `product_images` sync jobs
+- Pending synchronization is shown in the UI
 
 ---
 
@@ -345,22 +416,24 @@ Theme preference is persisted locally and applied before the application renders
 - Client applications use only the Supabase Anon Key.
 - Privileged operations use `SECURITY DEFINER` RPC functions.
 - Server-side policies validate roles before allowing organization management operations.
+- Invite and low-stock emails/pushes run in Edge Functions with the service role; the client never holds the service role key.
+- Push registration writes only the current user’s `profiles.push_token`.
 
 ---
 
 # Roadmap
 
-- [ ] Email delivery for invitations
-- [ ] Team management
-- [ ] Role management
+# Roadmap
+
+- [x] Email delivery for invitations
+- [x] Team management (members, roles, remove)
+- [x] Role management
+- [x] Push notifications (local + remote low stock)
+- [x] Offline image upload queue
 - [ ] Multi-organization switcher
-- [ ] Push notifications
-- [ ] Offline image upload queue
 - [ ] EAS production builds
-- [ ] App Store & Google Play release
+<!-- - [ ] App Store & Google Play release -->
 
 ---
 
 # License
-
-

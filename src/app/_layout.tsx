@@ -228,13 +228,12 @@ export default function RootLayout() {
   const inApp = isAuthenticated && !!organization;
   const needsOrg = isAuthenticated && !organization;
   const loggedOut = !isAuthenticated;
-  console.log(needsOrg);
   return (
     <ErrorBoundary>
       <GestureHandlerRootView
         style={{ flex: 1, backgroundColor: theme.colors.background }}
       >
-        <KeyboardProvider navigationBarTranslucent>
+        <KeyboardProvider>
           <SafeAreaProvider>
             <StatusBar style={theme.mode === "dark" ? "light" : "dark"} />
 
@@ -252,12 +251,11 @@ export default function RootLayout() {
                   <Stack.Screen name="(app)" />
                 </Stack.Protected>
 
-                <Stack.Protected guard={needsOrg}>
-                  {/* create-org must be addressable as its own screen name */}
+                {/* <Stack.Protected guard={needsOrg}>
                   <Stack.Screen name="(auth)/create-organization" />
-                </Stack.Protected>
+                </Stack.Protected> */}
 
-                <Stack.Protected guard={loggedOut}>
+                <Stack.Protected guard={loggedOut || needsOrg}>
                   <Stack.Screen name="(auth)" />
                 </Stack.Protected>
               </Stack>
