@@ -6,6 +6,8 @@ Track products, stock movements, categories, suppliers, and team access with off
 
 ---
 
+![StockFlow dashboard](./docs/images/sf_dashboard.jpg)
+
 # Features
 
 ## Authentication & Workspace
