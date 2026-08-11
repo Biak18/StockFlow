@@ -110,7 +110,7 @@ Track products, stock movements, categories, suppliers, and team access with off
 
 | Dashboard                                    | Products                                   | Stock                                |
 | -------------------------------------------- | ------------------------------------------ | ------------------------------------ |
-| ![Dashboard](./docs/images/sf_dashboard.png) | ![Products](./docs/images/sf_products.png) | ![Stock](./docs/images/products.png) |
+| ![Dashboard](./docs/images/sf_dashboard.jpg) | ![Products](./docs/images/sf_products.jpg) | ![Stock](./docs/images/sf_products.jpg) |
 
 # Tech Stack
 
