@@ -31,7 +31,9 @@ export default function ProductsScreen() {
   const theme = useUIStore((s) => s.theme);
   const insets = useSafeAreaInsets();
   const keyboardOffset = useFabKeyboardOffset();
-
+  const fabAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: -keyboardOffset.value }],
+  }));
   const { products, loading, refreshing, error, onRefresh } = useProducts();
 
   const [query, setQuery] = useState("");
@@ -114,10 +116,6 @@ export default function ProductsScreen() {
       </View>
     );
   }
-
-  const fabAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: -keyboardOffset.value }],
-  }));
 
   return (
     <SafeAreaView

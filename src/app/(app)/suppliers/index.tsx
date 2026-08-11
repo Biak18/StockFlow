@@ -33,7 +33,9 @@ export default function SuppliersScreen() {
   const organization = useAuthStore((s) => s.currentOrganization);
   const insets = useSafeAreaInsets();
   const keyboardOffset = useFabKeyboardOffset();
-
+  const fabAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: -keyboardOffset.value }],
+  }));
   const suppliers = useSuppliersStore((s) => s.suppliers);
   const loading = useSuppliersStore((s) => s.loading);
   const error = useSuppliersStore((s) => s.error);
@@ -102,10 +104,6 @@ export default function SuppliersScreen() {
       </View>
     );
   }
-
-  const fabAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: -keyboardOffset.value }],
-  }));
 
   return (
     <SafeAreaView

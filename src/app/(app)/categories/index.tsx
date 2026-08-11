@@ -32,7 +32,9 @@ export default function CategoriesScreen() {
   const organization = useAuthStore((s) => s.currentOrganization);
   const insets = useSafeAreaInsets();
   const keyboardOffset = useFabKeyboardOffset();
-
+  const fabAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: -keyboardOffset.value }],
+  }));
   const categories = useCategoriesStore((s) => s.categories);
   const loading = useCategoriesStore((s) => s.loading);
   const error = useCategoriesStore((s) => s.error);
@@ -101,10 +103,6 @@ export default function CategoriesScreen() {
       </View>
     );
   }
-
-  const fabAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: -keyboardOffset.value }],
-  }));
 
   return (
     <SafeAreaView
