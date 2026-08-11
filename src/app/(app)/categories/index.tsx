@@ -1,5 +1,6 @@
 import { Button, Skeleton } from "@/components/ui";
 import { categoryService } from "@/features/categories/services/category-service";
+import { useFabKeyboardOffset } from "@/hooks/useFabKeyboardOffset";
 import {
   alertDialog,
   confirmDialog,
@@ -20,6 +21,7 @@ import {
   Text,
   View,
 } from "react-native";
+import Animated, { useAnimatedStyle } from "react-native-reanimated";
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -29,6 +31,7 @@ export default function CategoriesScreen() {
   const theme = useUIStore((s) => s.theme);
   const organization = useAuthStore((s) => s.currentOrganization);
   const insets = useSafeAreaInsets();
+  const keyboardOffset = useFabKeyboardOffset();
 
   const categories = useCategoriesStore((s) => s.categories);
   const loading = useCategoriesStore((s) => s.loading);
@@ -98,6 +101,10 @@ export default function CategoriesScreen() {
       </View>
     );
   }
+
+  const fabAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: -keyboardOffset.value }],
+  }));
 
   return (
     <SafeAreaView
@@ -295,19 +302,26 @@ export default function CategoriesScreen() {
       )}
 
       {categories.length > 0 ? (
-        <Pressable
-          onPress={() => router.push("/(app)/categories/create")}
+        <Animated.View
           style={[
-            styles.fab,
-            {
-              backgroundColor: theme.colors.primary,
-              bottom: insets.bottom + 24,
-              ...theme.shadows.md,
-            },
+            styles.fabPosition,
+            { bottom: insets.bottom + 24 },
+            fabAnimatedStyle,
           ]}
         >
-          <Ionicons name="add" size={26} color="#fff" />
-        </Pressable>
+          <Pressable
+            onPress={() => router.push("/(app)/categories/create")}
+            style={[
+              styles.fab,
+              {
+                backgroundColor: theme.colors.primary,
+                ...theme.shadows.md,
+              },
+            ]}
+          >
+            <Ionicons name="add" size={26} color="#fff" />
+          </Pressable>
+        </Animated.View>
       ) : null}
     </SafeAreaView>
   );
@@ -381,9 +395,11 @@ const styles = StyleSheet.create({
   },
   rowTitle: { fontSize: 15, fontWeight: "700" },
   rowSub: { fontSize: 12, marginTop: 2 },
-  fab: {
+  fabPosition: {
     position: "absolute",
     right: 18,
+  },
+  fab: {
     width: 54,
     height: 54,
     borderRadius: 18,

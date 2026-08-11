@@ -13,6 +13,16 @@ export default function AppLayout() {
         screenOptions={{
           headerShown: false,
           tabBarHideOnKeyboard: true,
+          tabBarVisibilityAnimationConfig: {
+            hide: {
+              animation: "timing",
+              config: { duration: 200 },
+            },
+            show: {
+              animation: "timing",
+              config: { duration: 0 },
+            },
+          },
           tabBarStyle: {
             backgroundColor: theme.colors.surface,
             borderTopColor: theme.colors.surface,

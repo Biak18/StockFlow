@@ -21,13 +21,17 @@ import { ProductCard } from "@/features/products/components/ProductCard";
 import { findProductByBarcode } from "@/features/products/hooks/useProductByBarcode";
 import { useProducts } from "@/features/products/hooks/useProducts";
 import type { Product } from "@/features/products/types";
+import { useFabKeyboardOffset } from "@/hooks/useFabKeyboardOffset";
 import { confirmDialog, useUIStore } from "@/stores";
+import Animated, { useAnimatedStyle } from "react-native-reanimated";
 
 type StockFilter = "all" | "low" | "out";
 
 export default function ProductsScreen() {
   const theme = useUIStore((s) => s.theme);
   const insets = useSafeAreaInsets();
+  const keyboardOffset = useFabKeyboardOffset();
+
   const { products, loading, refreshing, error, onRefresh } = useProducts();
 
   const [query, setQuery] = useState("");
@@ -110,6 +114,10 @@ export default function ProductsScreen() {
       </View>
     );
   }
+
+  const fabAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: -keyboardOffset.value }],
+  }));
 
   return (
     <SafeAreaView
@@ -313,19 +321,23 @@ export default function ProductsScreen() {
 
       {/* FAB */}
       {products.length > 0 ? (
-        <Pressable
-          onPress={handleCreate}
+        <Animated.View
           style={[
-            styles.fab,
-            {
-              backgroundColor: theme.colors.primary,
-              bottom: insets.bottom + 24,
-              ...theme.shadows.md,
-            },
+            styles.fabPosition,
+            { bottom: insets.bottom + 24 },
+            fabAnimatedStyle,
           ]}
         >
-          <Ionicons name="add" size={26} color="#fff" />
-        </Pressable>
+          <Pressable
+            onPress={handleCreate}
+            style={[
+              styles.fab,
+              { backgroundColor: theme.colors.primary, ...theme.shadows.md },
+            ]}
+          >
+            <Ionicons name="add" size={26} color="#fff" />
+          </Pressable>
+        </Animated.View>
       ) : null}
 
       <BarcodeScannerModal
@@ -436,9 +448,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 19,
   },
-  fab: {
+  fabPosition: {
     position: "absolute",
     right: 18,
+  },
+  fab: {
     width: 54,
     height: 54,
     borderRadius: 18,

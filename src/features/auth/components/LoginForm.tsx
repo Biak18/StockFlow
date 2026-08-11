@@ -49,7 +49,6 @@ export function LoginForm() {
       const profile = await authService.getProfile(user.id);
       if (profile) setProfile(profile);
       const workspace = await resolveWorkspace(user.id);
-
       if (workspace) {
         setOrganization(workspace.organization, workspace.membership);
       } else {

@@ -79,9 +79,9 @@ export default function CreateProductScreen() {
         });
 
         // optional: show local preview from store
-        updateProduct(product.id, {
-          local_image_uri: localUri,
-        } as any);
+        // updateProduct(product.id, {
+        //   local_image_uri: localUri,
+        // } as any);
       } else {
         const path = await imageService.upload(
           organization.id,

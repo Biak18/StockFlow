@@ -106,7 +106,7 @@ export default function RootLayout() {
         if (session?.user && isMounted) {
           setSession(session);
           setResolvingOrg(true);
-          registerAndSavePushToken(session.user.id).catch(console.warn);
+          registerAndSavePushToken(session.user.id).catch(console.error);
           try {
             const profile = await authService.getProfile(session.user.id);
             if (profile) setProfile(profile);

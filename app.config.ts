@@ -21,6 +21,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   android: {
     icon: "./assets/images/icon.png",
+    "predictiveBackGestureEnabled": false,
     adaptiveIcon: {
       foregroundImage: "./assets/images/android-icon-foreground.png",
       backgroundImage: "./assets/images/android-icon-background.png",

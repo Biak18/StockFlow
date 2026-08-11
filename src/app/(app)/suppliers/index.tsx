@@ -18,6 +18,7 @@ import {
 
 import { Button, Skeleton } from "@/components/ui";
 import { supplierService } from "@/features/suppliers/services/supplier-service";
+import { useFabKeyboardOffset } from "@/hooks/useFabKeyboardOffset";
 import {
   alertDialog,
   confirmDialog,
@@ -25,11 +26,13 @@ import {
   useSuppliersStore,
   useUIStore,
 } from "@/stores";
+import Animated, { useAnimatedStyle } from "react-native-reanimated";
 
 export default function SuppliersScreen() {
   const theme = useUIStore((s) => s.theme);
   const organization = useAuthStore((s) => s.currentOrganization);
   const insets = useSafeAreaInsets();
+  const keyboardOffset = useFabKeyboardOffset();
 
   const suppliers = useSuppliersStore((s) => s.suppliers);
   const loading = useSuppliersStore((s) => s.loading);
@@ -99,6 +102,10 @@ export default function SuppliersScreen() {
       </View>
     );
   }
+
+  const fabAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: -keyboardOffset.value }],
+  }));
 
   return (
     <SafeAreaView
@@ -296,19 +303,26 @@ export default function SuppliersScreen() {
       )}
 
       {suppliers.length > 0 ? (
-        <Pressable
-          onPress={() => router.push("/(app)/suppliers/create")}
+        <Animated.View
           style={[
-            styles.fab,
-            {
-              backgroundColor: theme.colors.primary,
-              bottom: insets.bottom + 24,
-              ...theme.shadows.md,
-            },
+            styles.fabPosition,
+            { bottom: insets.bottom + 24 },
+            fabAnimatedStyle,
           ]}
         >
-          <Ionicons name="add" size={26} color="#fff" />
-        </Pressable>
+          <Pressable
+            onPress={() => router.push("/(app)/suppliers/create")}
+            style={[
+              styles.fab,
+              {
+                backgroundColor: theme.colors.primary,
+                ...theme.shadows.md,
+              },
+            ]}
+          >
+            <Ionicons name="add" size={26} color="#fff" />
+          </Pressable>
+        </Animated.View>
       ) : null}
     </SafeAreaView>
   );
@@ -337,9 +351,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
   },
   title: { fontSize: 24, fontWeight: "800", letterSpacing: -0.4 },
-  fab: {
+  fabPosition: {
     position: "absolute",
     right: 18,
+  },
+  fab: {
     width: 54,
     height: 54,
     borderRadius: 18,
