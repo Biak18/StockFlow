@@ -108,9 +108,9 @@ Track products, stock movements, categories, suppliers, and team access with off
 
 ## Screenshots
 
-| Dashboard                                 | Products                                | Stock                                |
-| ----------------------------------------- | --------------------------------------- | ------------------------------------ |
-| ![Dashboard](./docs/images/dashboard.png) | ![Products](./docs/images/products.png) | ![Stock](./docs/images/products.png) |
+| Dashboard                                    | Products                                   | Stock                                |
+| -------------------------------------------- | ------------------------------------------ | ------------------------------------ |
+| ![Dashboard](./docs/images/sf_dashboard.png) | ![Products](./docs/images/sf_products.png) | ![Stock](./docs/images/products.png) |
 
 # Tech Stack
 
