@@ -147,9 +147,8 @@ async function processItem(item: SyncQueueItem) {
 
       await syncQueue.markSynced(item.id);
     }
-    console.log("before flushing suppliers");
+
     if (item.table_name === "suppliers") {
-      console.log("flushing suppliers");
       const payload = JSON.parse(item.payload);
 
       if (item.operation === "insert") {

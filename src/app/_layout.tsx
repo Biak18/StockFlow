@@ -21,7 +21,10 @@ import { useAuthStore, useUIStore } from "@/stores";
 import * as Notifications from "expo-notifications";
 import * as SystemUI from "expo-system-ui";
 import { KeyboardProvider } from "react-native-keyboard-controller";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import {
+  initialWindowMetrics,
+  SafeAreaProvider,
+} from "react-native-safe-area-context";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -234,7 +237,7 @@ export default function RootLayout() {
         style={{ flex: 1, backgroundColor: theme.colors.background }}
       >
         <KeyboardProvider>
-          <SafeAreaProvider>
+          <SafeAreaProvider initialMetrics={initialWindowMetrics}>
             <StatusBar style={theme.mode === "dark" ? "light" : "dark"} />
 
             {booting ? (

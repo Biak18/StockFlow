@@ -104,7 +104,7 @@ export default function CreateProductScreen() {
       edges={["top"]}
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
-      <FadeIn>
+      <FadeIn delay={80} duration={300}>
         {/* Top bar */}
         <View style={styles.topBar}>
           <Pressable

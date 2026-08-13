@@ -37,7 +37,6 @@ export function LoginForm() {
   });
 
   const onSubmit = async (values: LoginFormValues) => {
-    useAuthStore.getState().setResolvingOrg(true);
     try {
       setLoading(true);
       setFormError(null);
@@ -46,19 +45,24 @@ export function LoginForm() {
 
       setSession(session);
 
-      const profile = await authService.getProfile(user.id);
-      if (profile) setProfile(profile);
-      const workspace = await resolveWorkspace(user.id);
-      if (workspace) {
-        setOrganization(workspace.organization, workspace.membership);
-      } else {
-        setOrganization(null, null);
+      useAuthStore.getState().setResolvingOrg(true);
+      try {
+        const profile = await authService.getProfile(user.id);
+        if (profile) setProfile(profile);
+
+        const workspace = await resolveWorkspace(user.id);
+        if (workspace) {
+          setOrganization(workspace.organization, workspace.membership);
+        } else {
+          setOrganization(null, null);
+        }
+      } finally {
+        useAuthStore.getState().setResolvingOrg(false);
       }
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "Unable to sign in");
     } finally {
       setLoading(false);
-      useAuthStore.getState().setResolvingOrg(false);
     }
   };
 
