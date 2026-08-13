@@ -1,4 +1,4 @@
-import { supplierService } from "@/features/suppliers/services/supplier-service";
+import { supplierRepository } from "@/features/suppliers/services/supplier-repository";
 import type { Supplier } from "@/features/suppliers/types";
 import { create } from "zustand";
 
@@ -47,7 +47,7 @@ export const useSuppliersStore = create<SuppliersState>((set, get) => ({
     });
 
     try {
-      const data = await supplierService.list(organizationId);
+      const data = await supplierRepository.list(organizationId);
       set({ suppliers: data, loading: false, error: null });
     } catch (err) {
       set({
@@ -60,7 +60,7 @@ export const useSuppliersStore = create<SuppliersState>((set, get) => ({
   addSupplier: (supplier) => {
     set((state) => ({
       suppliers: [...state.suppliers, supplier].sort((a, b) =>
-        a.name.localeCompare(b.name),
+        a.name.localeCompare(b.name)
       ),
     }));
   },

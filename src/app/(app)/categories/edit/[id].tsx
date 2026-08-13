@@ -24,7 +24,7 @@ import {
   categorySchema,
   type CategoryFormValues,
 } from "@/features/categories/schemas/category-schemas";
-import { categoryService } from "@/features/categories/services/category-service";
+import { categoryRepository } from "@/features/categories/services/category-repository";
 import type { Category } from "@/features/categories/types";
 import { useAuthStore, useCategoriesStore, useUIStore } from "@/stores";
 
@@ -125,7 +125,7 @@ export default function EditCategoryScreen() {
         setSaving(true);
         setFormError(null);
 
-        const updated = await categoryService.update(
+        const updated = await categoryRepository.update(
           category.id,
           organization.id,
           {

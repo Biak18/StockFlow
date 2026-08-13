@@ -19,11 +19,8 @@ import {
 import { FadeIn, Stagger } from "@/components/motion";
 import { Button, ErrorMessage, TextInput } from "@/components/ui";
 
-import {
-  SupplierFormValues,
-  supplierSchema,
-  supplierService,
-} from "@/features/suppliers";
+import { SupplierFormValues, supplierSchema } from "@/features/suppliers";
+import { supplierRepository } from "@/features/suppliers/services/supplier-repository";
 import { useAuthStore, useSuppliersStore, useUIStore } from "@/stores";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -75,8 +72,7 @@ export default function CreateSupplierScreen() {
         setLoading(true);
         setFormError(null);
 
-        const supplier = await supplierService.create({
-          organization_id: organization.id,
+        const supplier = await supplierRepository.create(organization.id, {
           name: values.name.trim(),
           email: values.email?.trim() || null,
           phone: values.phone?.trim() || null,

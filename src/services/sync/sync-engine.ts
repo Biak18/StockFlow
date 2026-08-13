@@ -120,6 +120,63 @@ async function processItem(item: SyncQueueItem) {
       if (product) await productLocal.upsertOne(product);
     }
 
+    if (item.table_name === "categories") {
+      const payload = JSON.parse(item.payload);
+
+      if (item.operation === "insert") {
+        const { error } = await supabase.from("categories").insert(payload);
+        if (error) throw error;
+      } else if (item.operation === "update") {
+        const { error } = await supabase
+          .from("categories")
+          .update(payload)
+          .eq("id", item.record_id)
+          .eq("organization_id", payload.organization_id);
+        if (error) throw error;
+      } else if (item.operation === "delete") {
+        const { error } = await supabase
+          .from("categories")
+          .update({
+            deleted_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", item.record_id)
+          .eq("organization_id", payload.organization_id);
+        if (error) throw error;
+      }
+
+      await syncQueue.markSynced(item.id);
+    }
+    console.log("before flushing suppliers");
+    if (item.table_name === "suppliers") {
+      console.log("flushing suppliers");
+      const payload = JSON.parse(item.payload);
+
+      if (item.operation === "insert") {
+        const { error } = await supabase.from("suppliers").insert(payload);
+        if (error) throw error;
+      } else if (item.operation === "update") {
+        const { error } = await supabase
+          .from("suppliers")
+          .update(payload)
+          .eq("id", item.record_id)
+          .eq("organization_id", payload.organization_id);
+        if (error) throw error;
+      } else if (item.operation === "delete") {
+        const { error } = await supabase
+          .from("suppliers")
+          .update({
+            deleted_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", item.record_id)
+          .eq("organization_id", payload.organization_id);
+        if (error) throw error;
+      }
+
+      await syncQueue.markSynced(item.id);
+    }
+
     await syncQueue.markSynced(item.id);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Sync failed";

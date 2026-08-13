@@ -17,7 +17,7 @@ import {
 } from "react-native-safe-area-context";
 
 import { Button, Skeleton } from "@/components/ui";
-import { supplierService } from "@/features/suppliers/services/supplier-service";
+import { supplierRepository } from "@/features/suppliers/services/supplier-repository";
 import { useFabKeyboardOffset } from "@/hooks/useFabKeyboardOffset";
 import {
   alertDialog,
@@ -75,7 +75,7 @@ export default function SuppliersScreen() {
     });
     if (!ok) return;
     try {
-      await supplierService.softDelete(id, organization.id);
+      await supplierRepository.remove(id, organization.id);
       removeSupplier(id);
     } catch (err) {
       await alertDialog({

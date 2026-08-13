@@ -24,7 +24,7 @@ import {
   supplierSchema,
   type SupplierFormValues,
 } from "@/features/suppliers/schemas/supplier-schemas";
-import { supplierService } from "@/features/suppliers/services/supplier-service";
+import { supplierRepository } from "@/features/suppliers/services/supplier-repository";
 import type { Supplier } from "@/features/suppliers/types";
 import { useAuthStore, useSuppliersStore, useUIStore } from "@/stores";
 
@@ -144,7 +144,7 @@ export default function EditSupplierScreen() {
         setSaving(true);
         setFormError(null);
 
-        const updated = await supplierService.update(
+        const updated = await supplierRepository.update(
           supplier.id,
           organization.id,
           {

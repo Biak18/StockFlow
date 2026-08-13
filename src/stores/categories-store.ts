@@ -1,4 +1,4 @@
-import { categoryService } from "@/features/categories/services/category-service";
+import { categoryRepository } from "@/features/categories/services/category-repository";
 import type { Category } from "@/features/categories/types";
 import { create } from "zustand";
 
@@ -47,7 +47,7 @@ export const useCategoriesStore = create<CategoriesState>((set, get) => ({
     });
 
     try {
-      const data = await categoryService.list(organizationId);
+      const data = await categoryRepository.list(organizationId);
       set({ categories: data, loading: false, error: null });
     } catch (err) {
       set({

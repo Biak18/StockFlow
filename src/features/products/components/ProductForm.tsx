@@ -13,13 +13,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import FormbaseView from "@/components/formbase/formbase";
 import { FadeIn, Stagger } from "@/components/motion";
-import {
-  Button,
-  ErrorMessage,
-  NumberInput,
-  SelectField,
-  TextInput,
-} from "@/components/ui";
+import { Button, ErrorMessage, NumberInput, TextInput } from "@/components/ui";
+import { PickerDropdown } from "@/components/ui/DropDown";
 import {
   alertDialog,
   useAuthStore,
@@ -79,13 +74,15 @@ export function ProductForm({
   }, [organization?.id, fetchCategories, fetchSuppliers]);
 
   const categoryOptions = categories.map((c) => ({
+    id: c.id,
     label: c.name,
-    value: c.id,
+    subLabel: c.description ?? undefined,
   }));
 
   const supplierOptions = suppliers.map((s) => ({
+    id: s.id,
     label: s.name,
-    value: s.id,
+    subLabel: s.email ?? s.phone ?? undefined,
   }));
 
   const {
@@ -381,12 +378,15 @@ export function ProductForm({
             control={control}
             name="category_id"
             render={({ field: { onChange, value } }) => (
-              <SelectField
-                label="Category"
+              <PickerDropdown
+                title="Category"
+                optionalText="Optional"
                 placeholder="Select category"
-                options={categoryOptions}
-                value={value}
-                onChange={onChange}
+                icon="pricetag-outline"
+                data={categoryOptions}
+                value={value ?? null}
+                nullable
+                onChange={(item) => onChange(item?.id ?? null)}
                 error={errors.category_id?.message}
               />
             )}
@@ -396,12 +396,15 @@ export function ProductForm({
             control={control}
             name="supplier_id"
             render={({ field: { onChange, value } }) => (
-              <SelectField
-                label="Supplier"
+              <PickerDropdown
+                title="Supplier"
+                optionalText="Optional"
                 placeholder="Select supplier"
-                options={supplierOptions}
-                value={value}
-                onChange={onChange}
+                icon="business-outline"
+                data={supplierOptions}
+                value={value ?? null}
+                nullable
+                onChange={(item) => onChange(item?.id ?? null)}
                 error={errors.supplier_id?.message}
               />
             )}

@@ -23,7 +23,7 @@ import {
   categorySchema,
   type CategoryFormValues,
 } from "@/features/categories/schemas/category-schemas";
-import { categoryService } from "@/features/categories/services/category-service";
+import { categoryRepository } from "@/features/categories/services/category-repository";
 import { useAuthStore, useCategoriesStore, useUIStore } from "@/stores";
 
 /* ------------------------------------------------------------------ */
@@ -109,8 +109,7 @@ export default function CreateCategoryScreen() {
         setLoading(true);
         setFormError(null);
 
-        const category = await categoryService.create({
-          organization_id: organization.id,
+        const category = await categoryRepository.create(organization.id, {
           name: values.name.trim(),
           description: values.description?.trim() || null,
         });

@@ -1,5 +1,5 @@
 import { Button, Skeleton } from "@/components/ui";
-import { categoryService } from "@/features/categories/services/category-service";
+import { categoryRepository } from "@/features/categories/services/category-repository";
 import { useFabKeyboardOffset } from "@/hooks/useFabKeyboardOffset";
 import {
   alertDialog,
@@ -74,7 +74,7 @@ export default function CategoriesScreen() {
 
     if (!ok) return;
     try {
-      await categoryService.softDelete(id, organization.id);
+      await categoryRepository.remove(id, organization.id);
       removeCategory(id);
     } catch (err) {
       await alertDialog({
