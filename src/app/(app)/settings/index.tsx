@@ -3,7 +3,6 @@ import Constants from "expo-constants";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  Pressable,
   ScrollView,
   StyleSheet,
   Switch,
@@ -16,6 +15,7 @@ import {
 } from "react-native-safe-area-context";
 
 import { FadeIn, Stagger } from "@/components/motion";
+import { PressableScale } from "@/components/ui/PressableScale";
 import { useSignOut } from "@/features/auth/hooks/useSignOut";
 import { resetLocalData } from "@/services/database/reset-local";
 import {
@@ -65,24 +65,28 @@ function SettingsRow({
   danger?: boolean;
 }) {
   const theme = useUIStore((s) => s.theme);
+  const tint = danger ? theme.colors.danger : theme.colors.primary;
 
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={!onPress && !right}
-      style={({ pressed }) => [
-        styles.row,
-        {
-          backgroundColor: theme.colors.surface,
-          opacity: pressed && onPress ? 0.85 : 1,
-        },
+  const row = (
+    <View
+      style={[
+        styles.rowInner,
+        onPress && !right ? styles.rowPressable : null,
       ]}
     >
-      <Ionicons
-        name={icon}
-        size={18}
-        color={danger ? theme.colors.danger : theme.colors.textSecondary}
-      />
+      <View
+        style={[
+          styles.iconBubble,
+          {
+            backgroundColor:
+              danger
+                ? (theme.colors.dangerMuted ?? theme.colors.surfaceSecondary)
+                : (theme.colors.primaryMuted ?? theme.colors.surfaceSecondary),
+          },
+        ]}
+      >
+        <Ionicons name={icon} size={16} color={tint} />
+      </View>
       <View style={styles.rowCopy}>
         <Text
           style={[
@@ -106,7 +110,22 @@ function SettingsRow({
             color={theme.colors.textTertiary}
           />
         ) : null)}
-    </Pressable>
+    </View>
+  );
+
+  if (!onPress) {
+    return <View style={[styles.row, { backgroundColor: theme.colors.surface }]}>{row}</View>;
+  }
+
+  return (
+    <PressableScale
+      onPress={onPress}
+      scaleTo={0.985}
+      haptic="light"
+      style={[styles.row, { backgroundColor: theme.colors.surface }]}
+    >
+      {row}
+    </PressableScale>
   );
 }
 
@@ -222,68 +241,61 @@ export default function SettingsScreen() {
     >
       <ScrollView
         contentContainerStyle={{
-          // paddingTop: insets.top + 12,
-          paddingBottom: insets.bottom + 20,
+          paddingBottom: insets.bottom + 110,
           paddingHorizontal: 16,
         }}
         showsVerticalScrollIndicator={false}
       >
         <FadeIn>
-          {/* <Text style={[styles.eyebrow, { color: theme.colors.textSecondary }]}>
-            Workspace
-          </Text> */}
           <Text style={[styles.title, { color: theme.colors.text }]}>
             Settings
           </Text>
         </FadeIn>
 
         <Stagger baseDelay={40} step={40}>
-          {/* Profile card */}
+          {/* Profile hero */}
           <View
             style={[
               styles.profileCard,
               {
-                backgroundColor:
-                  theme.colors.surfaceSecondary ?? theme.colors.surface,
-                borderColor: theme.colors.border,
+                backgroundColor: theme.colors.primary,
+                ...theme.shadows.md,
               },
             ]}
           >
             <View
               style={[
+                styles.orb,
+                styles.orbLg,
+                { backgroundColor: "rgba(255,255,255,0.12)" },
+              ]}
+            />
+            <View
+              style={[
+                styles.orb,
+                styles.orbSm,
+                { backgroundColor: "rgba(255,255,255,0.16)" },
+              ]}
+            />
+            <View
+              style={[
                 styles.avatar,
-                {
-                  backgroundColor:
-                    theme.colors.primaryMuted ?? theme.colors.surface,
-                },
+                { backgroundColor: "rgba(255,255,255,0.22)" },
               ]}
             >
-              <Text style={{ color: theme.colors.primary, fontWeight: "800" }}>
+              <Text style={{ color: "#fff", fontWeight: "800", fontSize: 15 }}>
                 {getInitials(profile?.full_name)}
               </Text>
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.profileName, { color: theme.colors.text }]}>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={[styles.profileName, { color: "#fff" }]}>
                 {profile?.full_name ?? "User"}
               </Text>
-              <Text
-                style={{
-                  color: theme.colors.textSecondary,
-                  fontSize: 12,
-                  marginTop: 3,
-                }}
-              >
+              <Text style={styles.profileMeta}>
                 {(role ?? "member").toString()} · {organization?.name ?? "—"}
               </Text>
               {profile?.email ? (
-                <Text
-                  style={{
-                    color: theme.colors.textTertiary,
-                    fontSize: 11,
-                    marginTop: 2,
-                  }}
-                  numberOfLines={1}
-                >
+                <Text style={styles.profileEmail} numberOfLines={1}>
                   {profile.email}
                 </Text>
               ) : null}
@@ -302,11 +314,12 @@ export default function SettingsScreen() {
               {
                 borderColor: theme.colors.border,
                 backgroundColor: theme.colors.surface,
+                ...theme.shadows.sm,
               },
             ]}
           >
             <SettingsRow
-              icon="grid-outline"
+              icon="shapes-outline"
               title="Categories"
               subtitle="Organize your catalog"
               onPress={() => router.push("/(app)/categories")}
@@ -343,6 +356,7 @@ export default function SettingsScreen() {
               {
                 borderColor: theme.colors.border,
                 backgroundColor: theme.colors.surface,
+                ...theme.shadows.sm,
               },
             ]}
           >
@@ -416,6 +430,7 @@ export default function SettingsScreen() {
               {
                 borderColor: theme.colors.border,
                 backgroundColor: theme.colors.surface,
+                ...theme.shadows.sm,
               },
             ]}
           >
@@ -453,38 +468,59 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  eyebrow: {
-    fontSize: 11,
-    fontWeight: "800",
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-    marginBottom: 4,
-  },
   title: {
     fontSize: 28,
     fontWeight: "800",
-    letterSpacing: -0.6,
+    letterSpacing: -0.7,
     marginBottom: 18,
   },
   profileCard: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    padding: 14,
-    borderRadius: 18,
-    borderWidth: 1,
+    gap: 13,
+    padding: 18,
+    borderRadius: 20,
+    overflow: "hidden",
     marginBottom: 22,
   },
+  orb: {
+    position: "absolute",
+    borderRadius: 999,
+  },
+  orbLg: {
+    width: 170,
+    height: 170,
+    top: -85,
+    right: -45,
+  },
+  orbSm: {
+    width: 100,
+    height: 100,
+    bottom: -50,
+    left: -25,
+  },
   avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
+    width: 50,
+    height: 50,
+    borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
   },
   profileName: {
     fontSize: 15,
     fontWeight: "800",
+    letterSpacing: -0.2,
+  },
+  profileMeta: {
+    color: "rgba(255,255,255,0.82)",
+    fontSize: 12,
+    marginTop: 3,
+    fontWeight: "600",
+  },
+  profileEmail: {
+    color: "rgba(255,255,255,0.65)",
+    fontSize: 11,
+    marginTop: 2,
   },
   groupLabel: {
     fontSize: 11,
@@ -496,17 +532,30 @@ const styles = StyleSheet.create({
   },
   group: {
     borderWidth: 1,
-    borderRadius: 16,
+    borderRadius: 18,
     overflow: "hidden",
     marginBottom: 20,
   },
   row: {
-    minHeight: 54,
+    overflow: "hidden",
+  },
+  rowPressable: {
+    flex: 1,
+  },
+  rowInner: {
+    minHeight: 58,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
     paddingHorizontal: 14,
     paddingVertical: 10,
+  },
+  iconBubble: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    alignItems: "center",
+    justifyContent: "center",
   },
   rowCopy: {
     flex: 1,
@@ -521,7 +570,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: StyleSheet.hairlineWidth,
-    marginLeft: 44,
+    marginLeft: 60,
   },
   footer: {
     textAlign: "center",

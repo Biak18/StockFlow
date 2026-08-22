@@ -1,5 +1,12 @@
 import { useUIStore } from "@/stores";
+import * as Haptics from "expo-haptics";
+import { useCallback, useRef } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 
 interface StatCardProps {
   label: string;
@@ -10,6 +17,10 @@ interface StatCardProps {
   icon?: React.ReactNode;
 }
 
+const SPRING_CONFIG = { damping: 20, stiffness: 340, mass: 0.5 };
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
 export function StatCard({
   label,
   value,
@@ -19,20 +30,48 @@ export function StatCard({
   icon,
 }: StatCardProps) {
   const theme = useUIStore((s) => s.theme);
+  const scale = useSharedValue(1);
+  const hapticCooldown = useRef(0);
 
-  const valueColor =
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = useCallback(() => {
+    if (!onPress) return;
+    scale.value = withSpring(0.96, SPRING_CONFIG);
+    const now = Date.now();
+    if (now - hapticCooldown.current > 120) {
+      hapticCooldown.current = now;
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    }
+  }, [onPress, scale]);
+
+  const handlePressOut = useCallback(() => {
+    scale.value = withSpring(1, SPRING_CONFIG);
+  }, [scale]);
+
+  const accent =
     tone === "warning"
       ? theme.colors.warning
       : tone === "danger"
         ? theme.colors.danger
         : tone === "success"
           ? theme.colors.success
-          : theme.colors.text;
+          : theme.colors.primary;
+
+  const accentMuted =
+    tone === "warning"
+      ? (theme.colors.warningMuted ?? theme.colors.surfaceSecondary)
+      : tone === "danger"
+        ? (theme.colors.dangerMuted ?? theme.colors.surfaceSecondary)
+        : theme.colors.primaryMuted ?? theme.colors.surfaceSecondary;
 
   const content = (
-    <View
+    <Animated.View
       style={[
         styles.card,
+        animatedStyle,
         {
           backgroundColor: theme.colors.surface,
           borderColor: theme.colors.border,
@@ -45,21 +84,12 @@ export function StatCard({
           {label}
         </Text>
         {icon ? (
-          <View
-            style={[
-              styles.iconWrap,
-              {
-                backgroundColor:
-                  theme?.colors?.primaryMuted ??
-                  theme?.colors?.surfaceSecondary,
-              },
-            ]}
-          >
+          <View style={[styles.iconWrap, { backgroundColor: accentMuted }]}>
             {icon}
           </View>
         ) : null}
       </View>
-      <Text style={[styles.value, { color: valueColor }]} numberOfLines={1}>
+      <Text style={[styles.value, { color: accent }]} numberOfLines={1}>
         {value}
       </Text>
       {subtitle ? (
@@ -67,14 +97,19 @@ export function StatCard({
           {subtitle}
         </Text>
       ) : null}
-    </View>
+    </Animated.View>
   );
 
   if (onPress) {
     return (
-      <Pressable onPress={onPress} style={styles.pressable}>
+      <AnimatedPressable
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        style={styles.pressable}
+      >
         {content}
-      </Pressable>
+      </AnimatedPressable>
     );
   }
 
@@ -88,23 +123,25 @@ const styles = StyleSheet.create({
   },
   card: {
     borderWidth: 1,
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 14,
     minHeight: 92,
     height: 100,
   },
   label: {
-    fontSize: 13,
-    fontWeight: "500",
-    marginBottom: 6,
+    fontSize: 12,
+    fontWeight: "600",
+    marginBottom: 8,
   },
   value: {
     fontSize: 22,
-    fontWeight: "700",
+    fontWeight: "800",
+    letterSpacing: -0.4,
   },
   subtitle: {
     fontSize: 12,
     marginTop: 4,
+    fontWeight: "500",
   },
   top: {
     flexDirection: "row",
@@ -114,7 +151,7 @@ const styles = StyleSheet.create({
   iconWrap: {
     width: 26,
     height: 26,
-    borderRadius: 8,
+    borderRadius: 9,
     alignItems: "center",
     justifyContent: "center",
   },

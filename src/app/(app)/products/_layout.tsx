@@ -9,7 +9,8 @@ export default function ProductsLayout() {
       <Stack
         screenOptions={{
           headerShown: false,
-          animation: "none",
+          animation: "slide_from_right",
+          animationDuration: 280,
         }}
       >
         <Stack.Screen name="index" />

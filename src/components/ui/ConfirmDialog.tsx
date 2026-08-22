@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useUIStore } from "@/stores";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { Button } from "./Button";
@@ -49,6 +50,24 @@ export function ConfirmDialog({
             },
           ]}
         >
+          {destructive || variant === "alert" ? (
+            <View
+              style={[
+                styles.iconBadge,
+                {
+                  backgroundColor:
+                    theme.colors.dangerMuted ??
+                    theme.colors.surfaceSecondary,
+                },
+              ]}
+            >
+              <Ionicons
+                name="warning-outline"
+                size={20}
+                color={theme.colors.danger}
+              />
+            </View>
+          ) : null}
           <Text style={[styles.title, { color: theme.colors.text }]}>
             {title}
           </Text>
@@ -110,9 +129,17 @@ const styles = StyleSheet.create({
   card: {
     width: "100%",
     maxWidth: 340,
-    borderRadius: 20,
+    borderRadius: 22,
     borderWidth: StyleSheet.hairlineWidth,
     padding: 20,
+  },
+  iconBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
   },
   title: {
     fontSize: 18,

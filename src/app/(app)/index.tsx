@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import * as Haptics from "expo-haptics";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Pressable,
   RefreshControl,
@@ -13,6 +14,11 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 
 import { FadeIn, Stagger } from "@/components/motion";
 import { SkeletonDashboard } from "@/components/ui";
@@ -47,6 +53,73 @@ function getInitials(name?: string | null) {
     .join("")
     .slice(0, 2)
     .toUpperCase();
+}
+
+const SPRING_CONFIG = { damping: 20, stiffness: 340, mass: 0.5 };
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+function QuickAction({
+  label,
+  icon,
+  onPress,
+}: {
+  label: string;
+  icon: React.ComponentProps<typeof Ionicons>["name"];
+  onPress: () => void;
+}) {
+  const theme = useUIStore((s) => s.theme);
+  const scale = useSharedValue(1);
+  const lastHaptic = useRef(0);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = useCallback(() => {
+    scale.value = withSpring(0.94, SPRING_CONFIG);
+    const now = Date.now();
+    if (now - lastHaptic.current > 120) {
+      lastHaptic.current = now;
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    }
+  }, [scale]);
+
+  const handlePressOut = useCallback(() => {
+    scale.value = withSpring(1, SPRING_CONFIG);
+  }, [scale]);
+
+  return (
+    <AnimatedPressable
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={[
+        styles.quick,
+        animatedStyle,
+        {
+          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.border,
+          ...theme.shadows.sm,
+        },
+      ]}
+    >
+      <View
+        style={[
+          styles.quickIcon,
+          {
+            backgroundColor:
+              theme.colors.primaryMuted ?? theme.colors.surfaceSecondary,
+          },
+        ]}
+      >
+        <Ionicons name={icon} size={16} color={theme.colors.primary} />
+      </View>
+      <Text style={[styles.quickLabel, { color: theme.colors.text }]}>
+        {label}
+      </Text>
+    </AnimatedPressable>
+  );
 }
 
 export default function DashboardScreen() {
@@ -319,44 +392,12 @@ export default function DashboardScreen() {
                 },
               ] as const
             ).map((action) => (
-              <Pressable
+              <QuickAction
                 key={action.label}
+                label={action.label}
+                icon={action.icon}
                 onPress={action.onPress}
-                style={({ pressed }) => [
-                  styles.quick,
-                  {
-                    backgroundColor: theme?.colors?.surface,
-                    borderColor: theme.colors.border,
-                    opacity: pressed ? 0.85 : 1,
-                  },
-                ]}
-              >
-                <View
-                  style={[
-                    styles.quickIcon,
-                    {
-                      backgroundColor:
-                        theme?.colors?.primaryMuted ??
-                        theme?.colors?.surfaceSecondary,
-                    },
-                  ]}
-                >
-                  <Ionicons
-                    name={action.icon}
-                    size={16}
-                    color={theme.colors.primary}
-                  />
-                </View>
-                <Text
-                  style={{
-                    color: theme.colors.text,
-                    fontSize: 11,
-                    fontWeight: "700",
-                  }}
-                >
-                  {action.label}
-                </Text>
-              </Pressable>
+              />
             ))}
           </View>
 
@@ -562,7 +603,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     padding: 12,
-    borderRadius: 14,
+    borderRadius: 16,
     marginBottom: 14,
     gap: 8,
   },
@@ -599,15 +640,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 7,
     paddingVertical: 12,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
   },
   quickIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 9,
+    width: 30,
+    height: 30,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
+  },
+  quickLabel: {
+    fontSize: 11,
+    fontWeight: "700",
   },
   emptyCard: {
     borderWidth: 1,

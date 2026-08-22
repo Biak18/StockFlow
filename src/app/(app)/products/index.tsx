@@ -5,7 +5,6 @@ import { useMemo, useState } from "react";
 import {
   Pressable,
   RefreshControl,
-  TextInput as RNTextInput,
   StyleSheet,
   Text,
   View,
@@ -15,25 +14,28 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
-import { Button, SkeletonProductRow } from "@/components/ui";
+import {
+  Button,
+  EmptyState,
+  FAB,
+  FilterChip,
+  ScreenHeader,
+  SearchBar,
+  SkeletonProductRow,
+} from "@/components/ui";
+import { PressableScale } from "@/components/ui/PressableScale";
 import { BarcodeScannerModal } from "@/features/products/components/BarcodeScannerModal";
 import { ProductCard } from "@/features/products/components/ProductCard";
 import { findProductByBarcode } from "@/features/products/hooks/useProductByBarcode";
 import { useProducts } from "@/features/products/hooks/useProducts";
 import type { Product } from "@/features/products/types";
-import { useFabKeyboardOffset } from "@/hooks/useFabKeyboardOffset";
 import { confirmDialog, useUIStore } from "@/stores";
-import Animated, { useAnimatedStyle } from "react-native-reanimated";
 
 type StockFilter = "all" | "low" | "out";
 
 export default function ProductsScreen() {
   const theme = useUIStore((s) => s.theme);
   const insets = useSafeAreaInsets();
-  const keyboardOffset = useFabKeyboardOffset();
-  const fabAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: -keyboardOffset.value }],
-  }));
   const { products, loading, refreshing, error, onRefresh } = useProducts();
 
   const [query, setQuery] = useState("");
@@ -103,11 +105,7 @@ export default function ProductsScreen() {
       <View
         style={[styles.container, { backgroundColor: theme.colors.background }]}
       >
-        <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-          <Text style={[styles.title, { color: theme.colors.text }]}>
-            Products
-          </Text>
-        </View>
+        <ScreenHeader title="Products" />
         <View style={{ paddingHorizontal: 16 }}>
           {Array.from({ length: 6 }).map((_, i) => (
             <SkeletonProductRow key={i} />
@@ -121,73 +119,26 @@ export default function ProductsScreen() {
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
-      {/* <FadeIn> */}
-      <View style={[styles.header]}>
-        <Text style={[styles.title, { color: theme.colors.text }]}>
-          Products
-        </Text>
-        {/* <Pressable
-            onPress={handleCreate}
-            style={[
-              styles.headerBtn,
-              {
-                backgroundColor:
-                  theme.colors.surfaceSecondary ?? theme.colors.surface,
-                borderColor: theme.colors.border,
-              },
-            ]}
-            hitSlop={8}
-          >
-            <Ionicons name="add" size={20} color={theme.colors.text} />
-          </Pressable> */}
-      </View>
-      {/* </FadeIn> */}
+      <ScreenHeader
+        title="Products"
+        subtitle={
+          products.length > 0
+            ? `${products.length} in your catalog`
+            : undefined
+        }
+      />
 
       {/* Search + scan */}
       <View style={styles.searchRow}>
-        <View
-          style={[
-            styles.searchBox,
-            {
-              backgroundColor:
-                theme.colors.surfaceSecondary ?? theme.colors.surface,
-              borderColor: theme.colors.border,
-            },
-          ]}
-        >
-          <Ionicons
-            name="search-outline"
-            size={16}
-            color={theme.colors.textTertiary}
-          />
-          <RNTextInput
+        <View style={styles.searchFlex}>
+          <SearchBar
             value={query}
             onChangeText={setQuery}
-            placeholder="Search name, SKU, barcode..."
-            placeholderTextColor={theme.colors.textTertiary}
-            style={[styles.searchInput, { color: theme.colors.text }]}
-            autoCorrect={false}
-            autoCapitalize="none"
-            clearButtonMode="while-editing"
+            placeholder="Search name, SKU, barcode"
           />
         </View>
 
-        <Pressable
-          onPress={() => setScannerOpen(true)}
-          style={[
-            styles.scanBtn,
-            {
-              backgroundColor:
-                theme.colors.primaryMuted ?? theme.colors.surfaceSecondary,
-            },
-          ]}
-        >
-          <Ionicons
-            name="scan-outline"
-            size={20}
-            color={theme.colors.primary}
-          />
-        </Pressable>
+        <PressableScan onPress={() => setScannerOpen(true)} />
       </View>
 
       {/* Chips */}
@@ -198,47 +149,20 @@ export default function ProductsScreen() {
             { key: "low", label: "Low stock" },
             { key: "out", label: "Out of stock" },
           ] as const
-        ).map((f) => {
-          const active = stockFilter === f.key;
-          return (
-            <Pressable
-              key={f.key}
-              onPress={() => setStockFilter(f.key)}
-              style={[
-                styles.chip,
-                {
-                  backgroundColor: active
-                    ? (theme.colors.primaryMuted ??
-                      theme.colors.surfaceSecondary)
-                    : (theme.colors.surfaceSecondary ?? theme.colors.surface),
-                  borderColor: active
-                    ? theme.colors.primary
-                    : theme.colors.border,
-                },
-              ]}
-            >
-              <Text
-                style={{
-                  color: active
-                    ? theme.colors.primary
-                    : theme.colors.textSecondary,
-                  fontSize: 12,
-                  fontWeight: "700",
-                }}
-              >
-                {f.label}
-              </Text>
-            </Pressable>
-          );
-        })}
+        ).map((f) => (
+          <FilterChip
+            key={f.key}
+            label={f.label}
+            active={stockFilter === f.key}
+            onPress={() => setStockFilter(f.key)}
+          />
+        ))}
       </View>
 
       {/* Meta */}
-      <View style={styles.listMeta}>
-        <Text style={{ color: theme.colors.textSecondary, fontSize: 12 }}>
-          {filtered.length} product{filtered.length === 1 ? "" : "s"}
-        </Text>
-      </View>
+      <Text style={[styles.listMeta, { color: theme.colors.textSecondary }]}>
+        {filtered.length} product{filtered.length === 1 ? "" : "s"}
+      </Text>
 
       {error ? (
         <View style={styles.centered}>
@@ -248,53 +172,18 @@ export default function ProductsScreen() {
           <Button title="Try again" onPress={onRefresh} />
         </View>
       ) : products.length === 0 ? (
-        <View style={styles.centered}>
-          <View
-            style={[
-              styles.emptyIcon,
-              {
-                backgroundColor:
-                  theme.colors.primaryMuted ?? theme.colors.surfaceSecondary,
-              },
-            ]}
-          >
-            <Ionicons
-              name="cube-outline"
-              size={22}
-              color={theme.colors.primary}
-            />
-          </View>
-          <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
-            Your catalog is empty
-          </Text>
-          <Text
-            style={[
-              styles.emptySubtitle,
-              { color: theme.colors.textSecondary },
-            ]}
-          >
-            Add your first product to start tracking stock and suppliers.
-          </Text>
-          <Button
-            title="Add first product"
-            onPress={handleCreate}
-            style={{ marginTop: 18 }}
-          />
-        </View>
+        <EmptyState
+          icon="cube-outline"
+          title="Your catalog is empty"
+          message="Add your first product to start tracking stock levels, suppliers and value."
+          action={<Button title="Add first product" onPress={handleCreate} />}
+        />
       ) : filtered.length === 0 ? (
-        <View style={styles.centered}>
-          <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
-            No matches
-          </Text>
-          <Text
-            style={[
-              styles.emptySubtitle,
-              { color: theme.colors.textSecondary },
-            ]}
-          >
-            Try a different search or filter
-          </Text>
-        </View>
+        <EmptyState
+          icon="search-outline"
+          title="No matches"
+          message="Try a different search or filter."
+        />
       ) : (
         <FlashList
           keyboardDismissMode="on-drag"
@@ -305,7 +194,7 @@ export default function ProductsScreen() {
           )}
           contentContainerStyle={{
             paddingHorizontal: 16,
-            paddingBottom: insets.bottom + 75,
+            paddingBottom: insets.bottom + 110,
           }}
           onRefresh={onRefresh}
           refreshing={refreshing}
@@ -317,26 +206,7 @@ export default function ProductsScreen() {
         />
       )}
 
-      {/* FAB */}
-      {products.length > 0 ? (
-        <Animated.View
-          style={[
-            styles.fabPosition,
-            { bottom: insets.bottom + 24 },
-            fabAnimatedStyle,
-          ]}
-        >
-          <Pressable
-            onPress={handleCreate}
-            style={[
-              styles.fab,
-              { backgroundColor: theme.colors.primary, ...theme.shadows.md },
-            ]}
-          >
-            <Ionicons name="add" size={26} color="#fff" />
-          </Pressable>
-        </Animated.View>
-      ) : null}
+      <FAB onPress={handleCreate} visible={products.length > 0} />
 
       <BarcodeScannerModal
         visible={scannerOpen}
@@ -348,60 +218,43 @@ export default function ProductsScreen() {
   );
 }
 
+function PressableScan({ onPress }: { onPress: () => void }) {
+  const theme = useUIStore((s) => s.theme);
+  return (
+    <PressableScale
+      onPress={onPress}
+      scaleTo={0.9}
+      haptic="medium"
+      accessibilityLabel="Scan barcode"
+      accessibilityRole="button"
+      style={[
+        styles.scanBtn,
+        {
+          backgroundColor:
+            theme.colors.primaryMuted ?? theme.colors.surfaceSecondary,
+        },
+      ]}
+    >
+      <Ionicons name="scan-outline" size={21} color={theme.colors.primary} />
+    </PressableScale>
+  );
+}
+
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-  },
-  eyebrow: {
-    fontSize: 11,
-    fontWeight: "800",
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-    marginBottom: 4,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "800",
-    letterSpacing: -0.6,
-  },
-  headerBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 13,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   searchRow: {
     flexDirection: "row",
-    gap: 8,
+    gap: 10,
     paddingHorizontal: 16,
     marginBottom: 12,
   },
-  searchBox: {
+  searchFlex: {
     flex: 1,
-    minHeight: 44,
-    borderWidth: 1,
-    borderRadius: 13,
-    paddingHorizontal: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-    paddingVertical: 10,
   },
   scanBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 13,
+    width: 46,
+    height: 46,
+    borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -411,14 +264,10 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 10,
   },
-  chip: {
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
   listMeta: {
     paddingHorizontal: 16,
+    fontSize: 12,
+    fontWeight: "600",
     marginBottom: 8,
   },
   centered: {
@@ -426,35 +275,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 32,
-  },
-  emptyIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 15,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 14,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  emptySubtitle: {
-    fontSize: 13,
-    textAlign: "center",
-    lineHeight: 19,
-  },
-  fabPosition: {
-    position: "absolute",
-    right: 18,
-  },
-  fab: {
-    width: 54,
-    height: 54,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
   },
 });

@@ -1,6 +1,21 @@
-import { Button, Skeleton } from "@/components/ui";
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
+import { FlatList, RefreshControl, StyleSheet, Text, View } from "react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+
+import {
+  Button,
+  EmptyState,
+  FAB,
+  ScreenHeader,
+  SearchBar,
+} from "@/components/ui";
 import { categoryRepository } from "@/features/categories/services/category-repository";
-import { useFabKeyboardOffset } from "@/hooks/useFabKeyboardOffset";
 import {
   alertDialog,
   confirmDialog,
@@ -8,33 +23,32 @@ import {
   useCategoriesStore,
   useUIStore,
 } from "@/stores";
-import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { router } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
-import {
-  FlatList,
-  Pressable,
-  RefreshControl,
-  TextInput as RNTextInput,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
-import Animated, { useAnimatedStyle } from "react-native-reanimated";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { PressableScale } from "@/components/ui/PressableScale";
+
+const ACCENTS = [
+  "#6366F1",
+  "#0EA5E9",
+  "#10B981",
+  "#F59E0B",
+  "#EF4444",
+  "#8B5CF6",
+  "#EC4899",
+  "#14B8A6",
+];
+
+function accentFor(name: string) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) {
+    h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  }
+  return ACCENTS[h % ACCENTS.length];
+}
 
 export default function CategoriesScreen() {
   const theme = useUIStore((s) => s.theme);
   const organization = useAuthStore((s) => s.currentOrganization);
   const insets = useSafeAreaInsets();
-  const keyboardOffset = useFabKeyboardOffset();
-  const fabAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: -keyboardOffset.value }],
-  }));
   const categories = useCategoriesStore((s) => s.categories);
   const loading = useCategoriesStore((s) => s.loading);
   const error = useCategoriesStore((s) => s.error);
@@ -85,89 +99,25 @@ export default function CategoriesScreen() {
     }
   };
 
-  if (loading && categories.length === 0) {
-    return (
-      <View
-        style={[styles.container, { backgroundColor: theme.colors.background }]}
-      >
-        <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-          <Text style={[styles.title, { color: theme.colors.text }]}>
-            Categories
-          </Text>
-        </View>
-        <View style={{ paddingHorizontal: 16, gap: 10 }}>
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} height={64} borderRadius={14} />
-          ))}
-        </View>
-      </View>
-    );
-  }
-
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
-      {/* <FadeIn> */}
-      <View style={[styles.header]}>
-        <View style={styles.headerLeft}>
-          {/* <Pressable
-              onPress={() => router.back()}
-              hitSlop={10}
-              style={styles.backBtn}
-            >
-              <Ionicons
-                name="chevron-back"
-                size={22}
-                color={theme.colors.text}
-              />
-            </Pressable> */}
-
-          <Text style={[styles.title, { color: theme.colors.text }]}>
-            Categories
-          </Text>
-        </View>
-        {/* <Pressable
-            onPress={() => router.push("/(app)/categories/create")}
-            style={[
-              styles.addBtn,
-              {
-                backgroundColor:
-                  theme.colors.surfaceSecondary ?? theme.colors.surface,
-                borderColor: theme.colors.border,
-              },
-            ]}
-          >
-            <Ionicons name="add" size={20} color={theme.colors.text} />
-          </Pressable> */}
-      </View>
-      {/* </FadeIn> */}
+      <ScreenHeader
+        title="Categories"
+        subtitle={
+          categories.length > 0
+            ? `${categories.length} in your catalog`
+            : undefined
+        }
+      />
 
       <View style={styles.searchWrap}>
-        <View
-          style={[
-            styles.searchBox,
-            {
-              backgroundColor:
-                theme.colors.surfaceSecondary ?? theme.colors.surface,
-              borderColor: theme.colors.border,
-            },
-          ]}
-        >
-          <Ionicons
-            name="search-outline"
-            size={16}
-            color={theme.colors.textTertiary}
-          />
-          <RNTextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Search categories"
-            placeholderTextColor={theme.colors.textTertiary}
-            style={[styles.searchInput, { color: theme.colors.text }]}
-            autoCorrect={false}
-          />
-        </View>
+        <SearchBar
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Search categories"
+        />
       </View>
 
       {error ? (
@@ -183,37 +133,18 @@ export default function CategoriesScreen() {
             }
           />
         </View>
-      ) : categories.length === 0 ? (
-        <View style={styles.centered}>
-          <View
-            style={[
-              styles.emptyIcon,
-              {
-                backgroundColor:
-                  theme.colors.primaryMuted ?? theme.colors.surfaceSecondary,
-              },
-            ]}
-          >
-            <Ionicons
-              name="grid-outline"
-              size={22}
-              color={theme.colors.primary}
+      ) : categories.length === 0 && !loading ? (
+        <EmptyState
+          icon="shapes-outline"
+          title="No categories yet"
+          message="Group products by type to keep your catalog organized and easy to browse."
+          action={
+            <Button
+              title="Add category"
+              onPress={() => router.push("/(app)/categories/create")}
             />
-          </View>
-          <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
-            No categories yet
-          </Text>
-          <Text
-            style={[styles.emptySub, { color: theme.colors.textSecondary }]}
-          >
-            Group products by type to keep your catalog organized.
-          </Text>
-          <Button
-            title="Add category"
-            onPress={() => router.push("/(app)/categories/create")}
-            style={{ marginTop: 16 }}
-          />
-        </View>
+          }
+        />
       ) : (
         <FlatList
           keyboardDismissMode="on-drag"
@@ -222,186 +153,128 @@ export default function CategoriesScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={{
             paddingHorizontal: 16,
-            paddingBottom: insets.bottom + 75,
+            paddingBottom: insets.bottom + 110,
           }}
-          ListHeaderComponent={
-            <Text
-              style={{
-                color: theme.colors.textSecondary,
-                fontSize: 12,
-                marginBottom: 10,
-              }}
-            >
-              {filtered.length} categor{filtered.length === 1 ? "y" : "ies"}
-            </Text>
-          }
           ListEmptyComponent={
-            <Text
-              style={{
-                color: theme.colors.textSecondary,
-                textAlign: "center",
-                marginTop: 24,
-              }}
-            >
-              No matches
-            </Text>
+            <View style={{ marginTop: 24 }}>
+              <EmptyState
+                icon="search-outline"
+                title="No matches"
+                message="Try a different search term."
+              />
+            </View>
           }
-          renderItem={({ item }) => (
-            <Pressable
-              onPress={() => router.push(`/(app)/categories/edit/${item.id}`)}
-              onLongPress={() => handleDelete(item.id, item.name)}
-              style={({ pressed }) => [
-                styles.row,
-                {
-                  backgroundColor: theme.colors.surface,
-                  borderColor: theme.colors.border,
-                  opacity: pressed ? 0.9 : 1,
-                },
-              ]}
-            >
-              <View
-                style={[
-                  styles.rowIcon,
-                  {
-                    backgroundColor:
-                      theme.colors.primaryMuted ??
-                      theme.colors.surfaceSecondary,
-                  },
-                ]}
+          renderItem={({ item, index }) => {
+            const accent = accentFor(item.name);
+            return (
+              <Animated.View
+                entering={
+                  index < 8
+                    ? FadeInDown.duration(280)
+                        .delay(index * 45)
+                        .withInitialValues({
+                          opacity: 0,
+                          transform: [{ translateY: 14 }],
+                        })
+                    : undefined
+                }
               >
-                <Ionicons
-                  name="pricetag-outline"
-                  size={16}
-                  color={theme.colors.primary}
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.rowTitle, { color: theme.colors.text }]}>
-                  {item.name}
-                </Text>
-                {item.description ? (
-                  <Text
+                <PressableScale
+                  onPress={() =>
+                    router.push(`/(app)/categories/edit/${item.id}`)
+                  }
+                  onLongPress={() => handleDelete(item.id, item.name)}
+                  scaleTo={0.98}
+                  haptic="light"
+                  style={[
+                    styles.row,
+                    {
+                      backgroundColor: theme.colors.surface,
+                      borderColor: theme.colors.border,
+                      ...theme.shadows.sm,
+                    },
+                  ]}
+                >
+                  <View
                     style={[
-                      styles.rowSub,
-                      { color: theme.colors.textSecondary },
+                      styles.rowIcon,
+                      { backgroundColor: `${accent}1A` },
                     ]}
-                    numberOfLines={1}
                   >
-                    {item.description}
-                  </Text>
-                ) : null}
-              </View>
-            </Pressable>
-          )}
+                    <Ionicons
+                      name="pricetag-outline"
+                      size={17}
+                      color={accent}
+                    />
+                  </View>
+                  <View style={styles.rowCopy}>
+                    <Text
+                      style={[styles.rowTitle, { color: theme.colors.text }]}
+                      numberOfLines={1}
+                    >
+                      {item.name}
+                    </Text>
+                    {item.description ? (
+                      <Text
+                        style={[
+                          styles.rowSub,
+                          { color: theme.colors.textSecondary },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {item.description}
+                      </Text>
+                    ) : null}
+                  </View>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={16}
+                    color={theme.colors.textTertiary}
+                  />
+                </PressableScale>
+              </Animated.View>
+            );
+          }}
           refreshControl={
             <RefreshControl refreshing={loading} onRefresh={onRefresh} />
           }
         />
       )}
 
-      {categories.length > 0 ? (
-        <Animated.View
-          style={[
-            styles.fabPosition,
-            { bottom: insets.bottom + 24 },
-            fabAnimatedStyle,
-          ]}
-        >
-          <Pressable
-            onPress={() => router.push("/(app)/categories/create")}
-            style={[
-              styles.fab,
-              {
-                backgroundColor: theme.colors.primary,
-                ...theme.shadows.md,
-              },
-            ]}
-          >
-            <Ionicons name="add" size={26} color="#fff" />
-          </Pressable>
-        </Animated.View>
-      ) : null}
+      <FAB onPress={() => router.push("/(app)/categories/create")} />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-  },
-  headerLeft: { flexDirection: "row", alignItems: "center", gap: 4 },
-  backBtn: {
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  eyebrow: {
-    fontSize: 11,
-    fontWeight: "800",
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-  },
-  title: { fontSize: 24, fontWeight: "800", letterSpacing: -0.4 },
-  searchWrap: { paddingHorizontal: 16, marginBottom: 12 },
-  searchBox: {
-    minHeight: 44,
-    borderWidth: 1,
-    borderRadius: 13,
-    paddingHorizontal: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  searchInput: { flex: 1, fontSize: 14, paddingVertical: 10 },
+  searchWrap: { paddingHorizontal: 16, marginBottom: 14 },
   centered: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 32,
   },
-  emptyIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 15,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 14,
-  },
-  emptyTitle: { fontSize: 18, fontWeight: "700", marginBottom: 8 },
-  emptySub: { fontSize: 13, textAlign: "center", lineHeight: 19 },
   row: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
     borderWidth: 1,
-    borderRadius: 14,
-    padding: 12,
-    marginBottom: 8,
+    borderRadius: 16,
+    padding: 13,
+    marginBottom: 9,
   },
   rowIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 11,
+    width: 40,
+    height: 40,
+    borderRadius: 13,
     alignItems: "center",
     justifyContent: "center",
   },
-  rowTitle: { fontSize: 15, fontWeight: "700" },
-  rowSub: { fontSize: 12, marginTop: 2 },
-  fabPosition: {
-    position: "absolute",
-    right: 18,
+  rowCopy: {
+    flex: 1,
+    minWidth: 0,
   },
-  fab: {
-    width: 54,
-    height: 54,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  rowTitle: { fontSize: 15, fontWeight: "700", letterSpacing: -0.2 },
+  rowSub: { fontSize: 12, marginTop: 2, lineHeight: 16 },
 });

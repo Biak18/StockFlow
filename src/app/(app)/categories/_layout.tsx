@@ -6,7 +6,13 @@ export default function CategoryLayout() {
   const theme = useUIStore((s) => s.theme);
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <Stack screenOptions={{ headerShown: false, animation: "none" }}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: "slide_from_right",
+          animationDuration: 280,
+        }}
+      >
         <Stack.Screen name="index" />
         <Stack.Screen name="create" />
         <Stack.Screen name="edit/[id]" />
